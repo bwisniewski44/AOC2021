@@ -1,5 +1,6 @@
 """
-TODO EXPLAIN
+Script to compute the answers to Day 1's puzzles of the 'Advent of Code' challenge:
+https://adventofcode.com/
 """
 
 import sys
@@ -8,9 +9,11 @@ import typing
 
 def read_measurement_sequence(path="input.txt"):
     """
-    TODO EXPLAIN
+    Reads a sequence of numbers from the file at the given path
 
-    return:
+    :param str path: path to file to read
+
+    return: value-sequence within the file
     :rtype: list[int]
     """
 
@@ -61,20 +64,27 @@ def aggregate_measurements(measurement_sequence, window_size):
 
 def count_increases(values):
     """
-    TODO EXPLAIN
+    Gives the number of elements in the sequence which are a greater value than that of the immediately-preceding
+    element.
 
-    :param list[int] values:
+    :param list[int] values: sequence of values
 
-    :return:
+    :return: number of increases
     :rtype: int
     """
 
+    # Initialize the result counter
     increases = 0
-    for i in range(1, len(values)):
-        right_value = values[i]
-        left_value = values[i-1]
 
-        if right_value > left_value:
+    # Begin iterating over the values from the second element (skip the first element - it doesn't have an
+    # 'immediately-preceding' value against which to compare)
+    for i in range(1, len(values)):
+        # Resolve the values to compare for this index
+        element = values[i]
+        preceding_element = values[i-1]
+
+        # Increment the counter if the element at this index has a value greater-than that of the preceding element
+        if element > preceding_element:
             increases += 1
 
     return increases
@@ -87,12 +97,13 @@ def print_increases(measurements, window_size):
 
     The depth-sequence is computed as an n-element sliding-window of measurements.
 
-    :param list[int] measurements:
-    :param int window_size:
+    :param list[int] measurements: sequence from which to build the depth sequence
+    :param int window_size: width of the sliding-window to slide over the measurements
 
     :return: None
     """
 
+    # Resolve the sequence of depths from which to count increases
     if window_size < 1:
         raise ValueError(f"Window size must be a positive number")
     elif window_size == 1:
@@ -100,14 +111,14 @@ def print_increases(measurements, window_size):
     else:
         depth_sequence = aggregate_measurements(measurements, window_size)
 
+    # Count the increases, then print a line to STDOUT
     increases = count_increases(depth_sequence)
-
     sys.stdout.write(f"{increases}\n")
 
 
 def main():
     """
-    TODO EXPLAIN
+    Reads the puzzle input, then prints a result per puzzle part.
 
     :return: None
     """
@@ -115,8 +126,10 @@ def main():
     # Read the measurement sequence from the input-file
     measurements = read_measurement_sequence("input.txt")
 
-    print_increases(measurements, 1)    # print for a 1-width sliding window (PART 1)
-    print_increases(measurements, 3)    # print for a 3-width sliding window (PART 2)
+    # Each puzzle part differs by the width of the window sliding over the measurements
+    window_sizes = [1, 3]
+    for window_size in window_sizes:
+        print_increases(measurements, window_size)
 
 
 if __name__ == "__main__":
