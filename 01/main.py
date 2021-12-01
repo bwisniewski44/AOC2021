@@ -13,7 +13,7 @@ def read_measurement_sequence(path="input.txt"):
 
     :param str path: path to file to read
 
-    return: value-sequence within the file
+    :return: value-sequence within the file
     :rtype: list[int]
     """
 
@@ -27,19 +27,20 @@ def read_measurement_sequence(path="input.txt"):
 
 def aggregate_measurements(measurement_sequence, window_size):
     """
-    TODO EXPLAIN
+    Builds a sequence of values from the given measurements by sliding an n-width window over the measurements,
+    computing a sum of values therein,
 
-    :param list[int] measurement_sequence:
-    :param int window_size:
+    :param list[int] measurement_sequence: value sequence from which to aggregate
+    :param int window_size: size of sliding-window
 
-    :return:
+    :return: aggregate value sequence
     :rtype:  list[int]
     """
 
     # Store the result sequence in this list
     depth_sequence = []  # type: typing.List[int]
 
-    # Initialize the first n-width sliding-window depth from the sequence
+    # Initialize the first n-width sliding-window value from the sequence
     accumulator = sum(measurement_sequence[i] for i in range(window_size))  # initialize to sum of first n entries
     depth_sequence.append(accumulator)                                      # append the initial entry
 
