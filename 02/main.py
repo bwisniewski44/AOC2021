@@ -16,11 +16,17 @@ DIMENSION_AND_PARITY_BY_KEYWORD = {
 
 def load_instructions(path="input.txt"):
     """
-    TODO EXPLAIN
+    Gives a sequence of movements, where a 'movement' is defined as a (DIMENSION,VALUE) pair: an adjustment of some
+    amount in the respective dimension. Dimensions may be ``VERTICAL`` or ``HORIZONTAL``.
 
-    :param str path:
+    Input is expected to express such elements, one per line, of the format ``{KEYWORD} {VALUE}``, where ``{KEYWORD}``
+    is any of ``up``, ``down``, ``forward``; and ``value`` is a whole-number expression.
 
-    :return:
+    :param str path: path to input file
+
+    :return: sequence of 2-tuple...
+      1. (int) code identifying the dimension in which movement occurs (vertical or horizontal)
+      2. (int) value adjusting the position within the respective dimension (may be positive or negative)
     :rtype: list[(int,int)]
     """
 
@@ -33,16 +39,16 @@ def load_instructions(path="input.txt"):
             keyword, magnitude_expression = line.split()                    # ValueError on incorrect number of elements
             dimension, parity = DIMENSION_AND_PARITY_BY_KEYWORD[keyword]    # KeyError on invalid keyword
         except ValueError as error:
-            sys.stderr.write(f"Formatting error at line index {i}: [{type(error)}][{error}]")
+            raise ValueError(f"Formatting error at line index {i}: [{type(error)}][{error}]")
         except KeyError:
-            sys.stderr.write(f"Unrecognized instruction at line index {i}; line: {repr(line)}")
+            raise ValueError(f"Unrecognized instruction at line index {i}; line: {repr(line)}")
         else:
             magnitude = int(magnitude_expression)
             scalar = magnitude if (parity == POSITIVE) else magnitude * -1
 
-            # Resolve the instruction and append
-            instruction = (dimension, scalar)
-            instruction_sequence.append(instruction)
+        # Resolve the instruction and append
+        instruction = (dimension, scalar)
+        instruction_sequence.append(instruction)
 
     return instruction_sequence
 
