@@ -62,10 +62,13 @@ def multiply_aggregations(instructions, track_aim):
     horizontal_position = 0
     vertical_position = 0
     for direction, scalar in instructions:
-        if direction == VERTICAL:
-            vertical_position += scalar
-        else:
+        if direction == HORIZONTAL:
             horizontal_position += scalar
+            vertical_position += scalar * aim
+        elif track_aim:
+            aim += scalar
+        else:
+            vertical_position += scalar
 
     return horizontal_position * vertical_position
 
@@ -78,8 +81,10 @@ def do():
     """
     instructions = load_instructions()
 
-    part_one_result = multiply_aggregations(instructions, False)
-    sys.stdout.write(f"{part_one_result}\n")
+    aim_tracking = [False, True]
+    for aim_tracking_status in aim_tracking:
+        result = multiply_aggregations(instructions, aim_tracking_status)
+        sys.stdout.write(f"{result}\n")
 
 
 if __name__ == "__main__":
