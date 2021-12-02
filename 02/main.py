@@ -47,26 +47,27 @@ def load_instructions(path="input.txt"):
     return instruction_sequence
 
 
-def multiply_aggregations(instructions):
+def multiply_aggregations(instructions, track_aim):
     """
     TODO EXPLAIN
 
     :param list[(int,int)] instructions:
+    :param bool track_aim:
 
     :return: product of sums
     :rtype: int
     """
 
-    sum_by_direction = {}   # type: typing.Dict[int, int]
-    for direction, magnitude in instructions:
-        old_sum = sum_by_direction.get(direction, 0)
-        sum_by_direction[direction] = old_sum + magnitude
+    aim = 0
+    horizontal_position = 0
+    vertical_position = 0
+    for direction, scalar in instructions:
+        if direction == VERTICAL:
+            vertical_position += scalar
+        else:
+            horizontal_position += scalar
 
-    product = 1
-    for _, aggregate in sum_by_direction.items():
-        product *= aggregate
-
-    return product
+    return horizontal_position * vertical_position
 
 
 def do():
@@ -77,7 +78,7 @@ def do():
     """
     instructions = load_instructions()
 
-    part_one_result = multiply_aggregations(instructions)
+    part_one_result = multiply_aggregations(instructions, False)
     sys.stdout.write(f"{part_one_result}\n")
 
 
