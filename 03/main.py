@@ -65,7 +65,7 @@ def calculate_optima(line_indices_by_glyph, expected_count, tie_breaker=None):
                 f"There are {minima_count} minima, each having {min_count} presentations; expecting 1 such minimum"
             )
 
-    return max_digit, min_digit
+    return min_digit, max_digit
 
 
 def evaluate_expression(digits):
@@ -137,6 +137,8 @@ def load_values(path="input.txt"):
     # All the lines' glyphs have been counted; time to find the winning glyph per line
     gamma_digits = []       # type: typing.List[str]
     epsilon_digits = []     # type: typing.List[str]
+    oxygen_rating_contribution_candidates = set(i for i in range(len(lines)))
+    c02_rating_contribution_candidates = set(i for i in range(len(lines)))
     for line_indices_by_glyph in counter_sequence:
         # The next gamma digit is that which is most-frequently found at this position
         epsilon_digit, gamma_digit = calculate_optima(line_indices_by_glyph, len(lines))
