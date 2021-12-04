@@ -3,12 +3,13 @@ import typing
 _ALPHABET = {"0", "1"}  # TODO: explain
 
 
-def calculate_optima(line_indices_by_glyph, expected_count):
+def calculate_optima(line_indices_by_glyph, expected_count, tie_breaker=None):
     """
     TODO EXPLAIN
 
     :param dict[str,set[int]] line_indices_by_glyph:
     :param int expected_count:
+    :param str tie_breaker:
 
     :return: 2-tuple giving...
       1. (str) least-populous digit among the set
@@ -25,9 +26,17 @@ def calculate_optima(line_indices_by_glyph, expected_count):
     while i < len(digits_and_counts):
         next_digit, next_count = digits_and_counts[i]
         total_count += next_count
-        if next_count > max_count:
+
+        # Update the maximum if necessary
+        if next_count == max_count and tie_breaker in {next_digit, max_digit}:
+            max_digit = tie_breaker
+        elif next_count > max_count:
             max_digit = next_digit
             max_count = next_count
+
+        # Update the minimum if necessary
+        if next_count == min_count and tie_breaker in {next_digit, min_digit}:
+            min_digit = tie_breaker
         elif next_count < min_count:
             min_digit = next_digit
             min_count = next_count
