@@ -3,11 +3,11 @@ import typing
 _ALPHABET = {"0", "1"}  # TODO: explain
 
 
-def calculate_optima(digits, expected_count):
+def calculate_optima(line_indices_by_glyph, expected_count):
     """
     TODO EXPLAIN
 
-    :param dict[str,int] digits:
+    :param dict[str,set[int]] line_indices_by_glyph:
     :param int expected_count:
 
     :return: 2-tuple giving...
@@ -16,7 +16,7 @@ def calculate_optima(digits, expected_count):
     :rtype: (str, str)
     """
 
-    digits_and_counts = [(digit, count) for digit, count in digits.items()]
+    digits_and_counts = [(digit, len(indices)) for digit, indices in line_indices_by_glyph.items()]
     max_digit, max_count = digits_and_counts[0]
     min_digit, min_count = digits_and_counts[0]
 
@@ -89,9 +89,9 @@ def load_values(path="input.txt"):
         lines = [line.strip() for line in infile.readlines()]
 
     # Initialize a vector of dictionaries, as many dictionaries as there are glyphs for any line; as we iterate over the
-    # lines of the file, and the characters of each line, we'll go to that index's dictionary and add 1 to the counter
-    # for the respective character found
-    counter_sequence = []     # type: typing.List[typing.Dict[str,int]]  # (str)glyph->(int)count, one for each index
+    # lines of the file, and the characters of each line, we'll go to that index's dictionary and add the line index to
+    # the set corresponding to the character found
+    counter_sequence = []     # type: typing.List[typing.Dict[str,typing.Set[int]]]  # (str)glyph->set[int] line indices
     if len(lines) == 0:
         raise ValueError(f"File '{path}' has no lines")
     else:
@@ -117,16 +117,20 @@ def load_values(path="input.txt"):
                 raise ValueError(f"Encountered illegal character '{glyph}' at index {j} of line {i}")
 
             # ... retrieve the glyph-counter corresponding to this character's index
-            glyph_counter = counter_sequence[j]
-            old_count = glyph_counter.get(glyph, 0)     # find the tally of this glyph for this position (use 0 if none)
-            glyph_counter[glyph] = old_count + 1        # ensure the counter has an incremented tally
+            line_indices_by_glyph = counter_sequence[j]
+            if glyph in line_indices_by_glyph:
+                line_indices = line_indices_by_glyph[glyph]
+            else:
+                line_indices = set()    # type: typing.Set[int]
+                line_indices_by_glyph[glyph] = line_indices
+            line_indices.add(i)
 
     # All the lines' glyphs have been counted; time to find the winning glyph per line
     gamma_digits = []       # type: typing.List[str]
     epsilon_digits = []     # type: typing.List[str]
-    for glyph_counter in counter_sequence:
+    for line_indices_by_glyph in counter_sequence:
         # The next gamma digit is that which is most-frequently found at this position
-        epsilon_digit, gamma_digit = calculate_optima(glyph_counter, len(lines))
+        epsilon_digit, gamma_digit = calculate_optima(line_indices_by_glyph, len(lines))
         gamma_digits.append(gamma_digit)
         epsilon_digits.append(epsilon_digit)
 
