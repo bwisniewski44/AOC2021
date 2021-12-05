@@ -144,8 +144,8 @@ class Board(object):
         """
         TODO EXPLAIN
 
-        :param i:
-        :param j:
+        :param int i:
+        :param int j:
 
         :return:
         :rtype: (int, bool)
