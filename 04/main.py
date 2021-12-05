@@ -62,10 +62,24 @@ class Board(object):
 
             return self.all_marked
 
+        def is_marked(self, value):
+            """
+            TODO EXPLAIN
+
+            :param int value:
+
+            :return:
+            :rtype: bool
+            """
+            return self._marked_status_by_value[value]
+
     def __init__(self, numbers):
         """
         :param list[int] numbers: TODO EXPLAIN
         """
+
+        if len(numbers) == 0:
+            raise ValueError("Cannot initialize an empty board")
 
         board_width = square_root(len(numbers))
 
@@ -92,7 +106,8 @@ class Board(object):
 
         # At this point, there should be 2X vectors (X being the width of the board): X vectors for the rows + X vectors
         # for the columns; we'll represent the board internally with a list of those vectors - rows first, then columns
-        self._vectors = rows + columns
+        self._vectors = list(rows)
+        self._vectors.extend(columns)
 
         # It'd also help to know which vectors to modify given a value being marked on this board, so we'll map possible
         # values to the vectors requiring modification
@@ -116,6 +131,36 @@ class Board(object):
     @property
     def bingo(self):
         return self._bingo_achieved
+
+    @property
+    def width(self):
+        return len(self._vectors[0].values)
+
+    @property
+    def height(self):
+        return self.width
+
+    def at(self, i, j):
+        """
+        TODO EXPLAIN
+
+        :param i:
+        :param j:
+
+        :return:
+        :rtype: (int, bool)
+        """
+        width = height = self.width
+        if i > height or j > width:
+            raise \
+                ValueError(
+                    f"Illegal coordinates ({i},{j}); max row index is {height-1} and max column index is {width-1}"
+                )
+
+        row_vector = self._vectors[i]   # type: Board._Vector
+        value = row_vector.values[j]    # type: int
+        is_marked = row_vector.is_marked(value)
+        return value, is_marked
 
     def mark(self, n):
         """
@@ -209,6 +254,68 @@ def load_input(path="input.txt"):
     return drawn_numbers, game_boards
 
 
+def compute_score(board, last_number):
+    """
+    TODO EXPLAIN
+
+    :param Board board:
+    :param int last_number:
+
+    :return:
+    :rtype: bool
+    """
+    sum_unmarked_numbers = 0
+    for row_index in range(board.height):
+        for column_index in range(board.width):
+            value, is_marked = board.at(row_index, column_index)
+            if not is_marked:
+                sum_unmarked_numbers += value
+
+    return sum_unmarked_numbers * last_number
+
+
+def find_winning_board(value_sequence, boards):
+    """
+    TODO EXPLAIN
+
+    :param list[int] value_sequence:
+    :param list[Board] boards:
+
+    :raises RuntimeError: if no board wins
+
+    :return:
+    :rtype: (Board, int)
+    """
+
+    if len(value_sequence) == 0:
+        raise ValueError("Cannot supply an empty value sequence")
+
+    # Iterate over the values until we have a winning board
+    winning_board = None    # type: typing.Optional[Board]
+    latest_drawing = None   # type: typing.Optional[int]
+    drawn_values = set()    # type: typing.Set[int]
+    i = 0
+    while winning_board is None and i < len(value_sequence):
+        # Register this value as the latest to have been drawn, skipping this loop iteration if seen before
+        latest_drawing = value_sequence[i]
+        if latest_drawing in drawn_values:
+            continue
+        drawn_values.add(latest_drawing)
+
+        # Begin applying this value to the game boards
+        for board in boards:
+            bingo = board.mark(latest_drawing)
+            if bingo:
+                winning_board = board
+                break
+
+        i += 1
+
+    if not winning_board:
+        raise RuntimeError("No winning board found")
+    return winning_board, latest_drawing
+
+
 def do():
     """
     TODO EXPLAIN
@@ -217,6 +324,11 @@ def do():
     """
 
     value_sequence, game_boards = load_input()
+
+    winning_board, last_number = find_winning_board(value_sequence, game_boards)
+    score = compute_score(winning_board, last_number)
+
+    print(f"{score}")
 
 
 if __name__ == "__main__":
