@@ -274,7 +274,7 @@ def compute_score(board, last_number):
     return sum_unmarked_numbers * last_number
 
 
-def find_winning_board(value_sequence, boards):
+def get_win_sequence(value_sequence, boards):
     """
     TODO EXPLAIN
 
@@ -283,37 +283,31 @@ def find_winning_board(value_sequence, boards):
 
     :raises RuntimeError: if no board wins
 
-    :return:
-    :rtype: (Board, int)
+    :return: sequence of 2-tuples representing the sequence of wins; each 2-tuple gives...
+      1. (int) the index of the draw which resulted in the respective win
+      2. (int) the index of the board of the respective win
+    :rtype: list[(int,int)]
     """
 
     if len(value_sequence) == 0:
         raise ValueError("Cannot supply an empty value sequence")
 
     # Iterate over the values until we have a winning board
-    winning_board = None    # type: typing.Optional[Board]
-    latest_drawing = None   # type: typing.Optional[int]
-    drawn_values = set()    # type: typing.Set[int]
-    i = 0
-    while winning_board is None and i < len(value_sequence):
-        # Register this value as the latest to have been drawn, skipping this loop iteration if seen before
-        latest_drawing = value_sequence[i]
-        if latest_drawing in drawn_values:
-            continue
-        drawn_values.add(latest_drawing)
+    remaining_boards = set(range(len(boards)))
+    win_sequence = []       # type: typing.List[typing.Tuple[int,int]]  # index of draw, index of board
+    for draw_index, value in enumerate(value_sequence):
+        # If all the boards have bingo, no point in drawing further numbers
+        if not remaining_boards:
+            break
 
-        # Begin applying this value to the game boards
-        for board in boards:
-            bingo = board.mark(latest_drawing)
+        for board_index in sorted(remaining_boards):
+            board = boards[board_index]
+            bingo = board.mark(value)
             if bingo:
-                winning_board = board
-                break
+                win_sequence.append((draw_index, board_index))
+                remaining_boards.remove(board_index)
 
-        i += 1
-
-    if not winning_board:
-        raise RuntimeError("No winning board found")
-    return winning_board, latest_drawing
+    return win_sequence
 
 
 def do():
@@ -325,10 +319,13 @@ def do():
 
     value_sequence, game_boards = load_input()
 
-    winning_board, last_number = find_winning_board(value_sequence, game_boards)
-    score = compute_score(winning_board, last_number)
+    win_sequence = get_win_sequence(value_sequence, game_boards)
 
-    print(f"{score}")
+    wins_to_print = [win_sequence[0], win_sequence[-1]]
+    for draw_index, board_index in wins_to_print:
+        drawn_value = value_sequence[draw_index]
+        board = game_boards[board_index]
+        print(f"{compute_score(board, drawn_value)}")
 
 
 if __name__ == "__main__":
