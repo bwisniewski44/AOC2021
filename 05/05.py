@@ -43,11 +43,10 @@ class Vector(object):
         else:
             raise ValueError(f"Vector has no length")
         self.direction = direction
-        step_count = row_delta or col_delta  # take whichever one is non-zero (if both non-zero, they're equal so doesn't matter which)
 
         self._row_step = 1 if row_delta > 0 else -1 if row_delta < 0 else 0
         self._col_step = 1 if col_delta > 0 else -1 if col_delta < 0 else 0
-        self._steps = step_count or 1  # if 0 (no movement), at least do the start coordinate
+        self._magnitude = abs(row_delta or col_delta)
 
     def __repr__(self):
         return f"({self.start[0]},{self.start[1]}) {_COORDINATE_SEPARATOR} ({self.stop[0]},{self.stop[1]})"
@@ -64,7 +63,8 @@ class Vector(object):
 
         i = 0
         x, y = self.start
-        while i < self._steps:
+        intersected_coordinates = self._magnitude + 1  # even magnitude zero (starts/stops on same point) includes one
+        while i < intersected_coordinates:
             coordinates.append(
                 (x, y)
             )
