@@ -101,7 +101,7 @@ class Board(object):
             column_element_index = i
             while column_element_index < len(numbers):
                 column_elements.append(numbers[column_element_index])
-                column_element_index += 1
+                column_element_index += _EXPECTED_BOARD_SIZE
             columns.append(Board._Vector(column_elements))
 
         # At this point, there should be 2X vectors (X being the width of the board): X vectors for the rows + X vectors
