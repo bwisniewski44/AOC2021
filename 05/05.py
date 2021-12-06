@@ -193,9 +193,15 @@ def main():
     """
 
     vectors = load_input()
+
+    # Part 1: count the number of points over which at least two vectors overlap; consider only non-diagonal vectors
     overlap_tally_by_coordinate = tally_hits(vectors, direction_filter={Vector.HORIZONTAL, Vector.VERTICAL})
     part_1 = tally_affected_points(overlap_tally_by_coordinate, threshold=2)
     print(part_1)
+
+    # Part 2: include diagonals this time
+    all_affected_points = tally_affected_points(tally_hits(vectors), threshold=2)
+    print(all_affected_points)
 
 
 if __name__ == "__main__":
