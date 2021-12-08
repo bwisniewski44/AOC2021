@@ -25,7 +25,7 @@ def load_input(path="input.txt"):
     return vector
 
 
-def build_rotator(values, theoretical_max=7):
+def build_rotator(values, theoretical_max=6):
     """
     TODO EXPLAIN
 
@@ -52,18 +52,43 @@ def build_rotator(values, theoretical_max=7):
     return sorted_tallies
 
 
-def run_simulation(days, tallies, maturation_period=0):
+def run_simulation(days, mature_members, maturation_period=0):
     """
     TODO EXPLAIN
 
     :param int days:
-    :param deque[int] tallies:
+    :param deque[int] mature_members:
     :param int maturation_period:
 
     :return:
     :rtype: int
     """
-    pass
+
+    # Stores tally of new members which are waiting to be introduced to the mature rotation; for each day, the leftmost
+    # tally shall be popped and the rightmost element of the mature tallies shall be incremented
+    on_deck = deque(0 for _ in range(maturation_period))
+    introduction_index = len(mature_members) - 1
+
+    day = 0
+    while day < days:
+        # Leftmost of the mature population give birth; add an immature population
+        birthing_population = mature_members.popleft()
+        on_deck.append(birthing_population)
+        mature_members.append(birthing_population)
+
+        # The oldest of the immature fish mature and join the population which just birthed; they'll birth on the same
+        # schedule
+        new_members = on_deck.popleft()
+        mature_members[introduction_index] += new_members
+
+        # Advance to the next day
+        day += 1
+
+    # Count the populations, both mature and immature
+    mature_population = sum(mature_members)
+    immature_population = sum(on_deck)
+    full_population = mature_population + immature_population
+    return full_population
 
 
 def main():
@@ -75,6 +100,9 @@ def main():
 
     vector = load_input()
     rotator = build_rotator(vector)
+
+    print(run_simulation(80, rotator, maturation_period=2))
+    print(run_simulation(256, rotator, maturation_period=2))
 
 
 if __name__ == "__main__":
