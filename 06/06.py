@@ -52,7 +52,7 @@ def build_rotator(values, theoretical_max=6):
     return sorted_tallies
 
 
-def run_simulation(days, mature_members, maturation_period=0):
+def run_simulation(days, mature_members, maturation_period=2):
     """
     TODO EXPLAIN
 
@@ -63,6 +63,9 @@ def run_simulation(days, mature_members, maturation_period=0):
     :return:
     :rtype: int
     """
+
+    # Get a copy of the given values
+    mature_members = deque(mature_members)
 
     # Stores tally of new members which are waiting to be introduced to the mature rotation; for each day, the leftmost
     # tally shall be popped and the rightmost element of the mature tallies shall be incremented
