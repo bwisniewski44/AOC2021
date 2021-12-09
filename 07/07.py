@@ -53,7 +53,19 @@ def average(tally_by_value):
     return whole_average
 
 
-def total_distance(tally_by_position, destination):
+def calculate_cost(distance):
+    """
+    TODO EXPLAIN
+
+    :param int distance:
+
+    :return:
+    :rtype: int
+    """
+    return distance * (distance + 1) // 2
+
+
+def compute_cost(tally_by_position, destination):
     """
     TODO EXPLAIN
 
@@ -67,7 +79,7 @@ def total_distance(tally_by_position, destination):
     total = 0
     for position, tally in tally_by_position.items():
         offset = abs(position - destination)
-        total += offset * tally
+        total += calculate_cost(offset) * tally
 
     return total
 
@@ -79,17 +91,15 @@ def main():
     :return: None
     """
     tally_by_position = load_input()
-    average_position = average(tally_by_position)
-    distance = total_distance(tally_by_position, average_position)
 
     # Find that between the min and max positions to which transition costs less fuel
     max_position = max(tally_by_position)
     min_position = min(tally_by_position)
     range_ = max_position - min_position
-    min_distance = range_ * sum(tally for _, tally in tally_by_position.items())
+    min_distance = calculate_cost(range_) * sum(value for _, value in tally_by_position.items())
     min_convergance = min_position
     for convergence in range(min_position, max_position+1):
-        distance = total_distance(tally_by_position, convergence)
+        distance = compute_cost(tally_by_position, convergence)
         if distance < min_distance:
             min_distance = distance
             min_convergance = convergence
