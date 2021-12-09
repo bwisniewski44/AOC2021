@@ -284,6 +284,59 @@ def evaluate_expressions(expressions):
     return value_by_segments
 
 
+def tally_digits_encountered(subject_values, alphabets_and_expressions):
+    """
+    TODO EXPLAIN
+
+    :param set[int] subject_values:
+    :param list[(set[str], list[str])] alphabets_and_expressions:
+
+    :return:
+    :rtype: int
+    """
+
+    tally_by_value = {}
+
+    for alphabet, expressions in alphabets_and_expressions:
+        value_by_expression = evaluate_expressions(alphabet)
+        for expression in expressions:
+            value = value_by_expression[expression]
+            if value in subject_values:
+                old_tally = tally_by_value.get(value, 0)
+                tally_by_value[value] = old_tally + 1
+
+    total_occurrences = sum(tally for _, tally in tally_by_value.items())
+    return total_occurrences
+
+
+def sum_output(alphabets_and_readings):
+    """
+    TODO EXPLAIN
+
+    :param list[(set[str], list[str])] alphabets_and_readings:
+
+    :return:
+    :rtype: int
+    """
+
+    sum_total = 0
+
+    for alphabet, expressions in alphabets_and_readings:
+        values_by_expression = evaluate_expressions(alphabet)
+
+        # Resolve the decimal digits for this sequence of output expressions
+        decimal_digits = []  # type: typing.List[str]
+        for expression in expressions:
+            decimal_value = values_by_expression[expression]
+            decimal_digits.append(str(decimal_value))
+
+        # Resolve the value encoded by the decimal digit sequence
+        output_value = int("".join(decimal_digits))
+        sum_total += output_value
+
+    return sum_total
+
+
 def main():
     """
     TODO EXPLAIN
@@ -292,9 +345,8 @@ def main():
     """
     alphabets_and_readings = load_input()
 
-    for alphabet, readings in alphabets_and_readings:
-        values_by_expression = evaluate_expressions(alphabet)
-        print(f"Found: {values_by_expression}")
+    print(tally_digits_encountered({1, 4, 7, 8}, alphabets_and_readings))
+    print(sum_output(alphabets_and_readings))
 
 
 if __name__ == "__main__":
