@@ -5,6 +5,8 @@ This script is part of a solution set devised to complete the 'Advent of Code' p
 https://adventofcode.com/2021
 """
 
+import typing
+
 
 def load_input(path="input.txt"):
     """
@@ -12,9 +14,62 @@ def load_input(path="input.txt"):
 
     :param str path: path to the file to read as input to this script
 
-    :return:
+    :return: tally by distance
+    :rtype: dict[int,int]
     """
-    pass
+
+    with open(path) as infile:
+        lines = [str.strip(line) for line in infile.readlines()]
+
+    tally_by_value = {}  # type: typing.Dict[int,int]
+    leading_line = lines[0]
+    for expression in [str.strip(element) for element in leading_line.split(",")]:
+        value = int(expression)
+        old_tally = tally_by_value.get(value, 0)
+        tally_by_value[value] = old_tally + 1
+
+    return tally_by_value
+
+
+def average(tally_by_value):
+    """
+    TODO EXPLAIN
+
+    :param dict[int,int] tally_by_value:
+
+    :return:
+    :rtype: int
+    """
+
+    total = 0
+    count = 0
+
+    for value, scale in tally_by_value.items():
+        total += value * scale
+        count += scale
+
+    avg = total / count + 0.5   # add 0.5: it's a rounding trick
+    whole_average = int(avg)
+    return whole_average
+
+
+def total_distance(tally_by_position, destination):
+    """
+    TODO EXPLAIN
+
+    :param dict[int,int] tally_by_position:
+    :param int destination:
+
+    :return:
+    :rtype: int
+    """
+
+    total = 0
+    for position, tally in tally_by_position.items():
+        offset = abs(position - destination)
+        total += offset * tally
+
+    return total
 
 
 def main():
@@ -23,7 +78,23 @@ def main():
 
     :return: None
     """
-    pass
+    tally_by_position = load_input()
+    average_position = average(tally_by_position)
+    distance = total_distance(tally_by_position, average_position)
+
+    # Find that between the min and max positions to which transition costs less fuel
+    max_position = max(tally_by_position)
+    min_position = min(tally_by_position)
+    range_ = max_position - min_position
+    min_distance = range_ * sum(tally for _, tally in tally_by_position.items())
+    min_convergance = min_position
+    for convergence in range(min_position, max_position+1):
+        distance = total_distance(tally_by_position, convergence)
+        if distance < min_distance:
+            min_distance = distance
+            min_convergance = convergence
+
+    print(f"Min distance is {min_distance} for converging at {min_convergance}")
 
 
 if __name__ == "__main__":
