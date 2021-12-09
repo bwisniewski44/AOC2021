@@ -263,7 +263,7 @@ def evaluate_expressions(expressions):
     #   9: that which shares four segments with 4
     unsolved_keys = set(normalized_expressions).difference(value_by_segments)
     for key in unsolved_keys:
-        if center_segment in key:
+        if center_segment not in key:
             value_by_segments[key] = 0
         else:
             four_commonalities = len(set(key).intersection(four_key))
