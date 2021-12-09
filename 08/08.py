@@ -190,7 +190,7 @@ def evaluate_expressions(expressions):
 
     # The five-segment expressions can really break this open for us...
     # * The 3 is that containing all of 7's segments
-    # * The bottom is that common to all and *not* the top
+    # * Only the top, center, and bottom segments are common to all of the five-segment expressions
     five_segment_expressions = expressions_by_length[5]
     two_segments = None     # type: typing.Optional[typing.Set[str]]    # to contain the 2's segments
     three_segments = None   # type: typing.Optional[typing.Set[str]]    # to contain the 3's segments
@@ -225,7 +225,7 @@ def evaluate_expressions(expressions):
         # Common segments can only be those shared by this expression
         common_segments = common_segments.intersection(five_segment_expression)
 
-    # 3's segments should be defined by now
+    # The segments comprising the 2, 3, and 5 should now all be known
     two_key, three_key, five_key = (normalize(segments) for segments in [two_segments, three_segments, five_segments])
     value_by_segments.update(
         {
