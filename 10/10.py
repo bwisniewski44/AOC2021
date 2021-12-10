@@ -14,6 +14,16 @@ EXPECTED_OPENER_AND_SCORE_BY_CLOSER = {
     ">": ("<", 25137),
 }
 
+COMPLETENESS_POINTS_BY_OPENER = {
+    "(": 1,
+    "[": 2,
+    "{": 3,
+    "<": 4,
+}
+
+SYNTAX_ERROR = 0
+COMPLETENESS_ERROR = 1
+
 
 class Node(object):
     """
@@ -51,7 +61,7 @@ def scan(line):
     :param str line:
 
     :return:
-    :rtype: int | None
+    :rtype: (int, int) | None
     """
 
     unfinished_nodes = []   # type: typing.List[Node]
@@ -67,9 +77,19 @@ def scan(line):
 
             actual_opener = node.opener
             if actual_opener != expected_opener:
-                return score
+                return SYNTAX_ERROR, score
 
-    return None
+    # If there are unpaired symbols, this is where we get a completeness error
+    if not unfinished_nodes:
+        return None
+    else:
+        completeness_score = 0
+        for node in unfinished_nodes:
+            completeness_score *= 5
+            addend = COMPLETENESS_POINTS_BY_OPENER[node.opener]
+            completeness_score += addend
+
+        return COMPLETENESS_ERROR, completeness_score
 
 
 def main():
@@ -80,12 +100,17 @@ def main():
     """
     lines = load_input()
 
-    score = 0
+    score_by_error = {}  # type: typing.Dict[int,int]
     for line in lines:
-        syntax_error_value = scan(line)
-        if syntax_error_value is not None:
-            score += syntax_error_value
-    print(score)
+        # Scan the line; it can be ignored unless there's an error
+        error = scan(line)
+        if error:
+            # There's an error; increment the respective error-type's score
+            error_type, score = error
+            old_score = score_by_error.get(error_type, 0)
+            score_by_error[error_type] = old_score + score
+    print(score_by_error.get(SYNTAX_ERROR, 0))
+    print(score_by_error.get(COMPLETENESS_ERROR, 0))
 
 
 if __name__ == "__main__":
