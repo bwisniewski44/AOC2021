@@ -7,19 +7,12 @@ https://adventofcode.com/2021
 
 import typing
 
-EXPECTED_OPENER_AND_SCORE_BY_CLOSER = {
-    ")": ("(", 3),
-    "]": ("[", 57),
-    "}": ("{", 1197),
-    ">": ("<", 25137),
-}
-
-COMPLETENESS_POINTS_BY_OPENER = {
-    "(": 1,
-    "[": 2,
-    "{": 3,
-    "<": 4,
-}
+_INITIALIZING_TABLE = [
+    ("(", 1, ")", 3),
+    ("[", 2, "]", 57),
+    ("{", 3, "}", 1197),
+    ("<", 4, ">", 25137),
+]
 
 SYNTAX_ERROR = 0
 COMPLETENESS_ERROR = 1
@@ -54,11 +47,31 @@ def load_input(path="input.txt"):
     return lines
 
 
-def scan(line):
+def get_scoring_basis():
+    """
+    TODO EXPLAIN
+
+    :return:
+    :rtype: (dict[str,int] , dict[str,(str,int)])
+    """
+
+    unpaired_score_by_opener = {}                       # type: typing.Dict[str,int]
+    expected_opener_and_mismatch_score_by_closer = {}   # type: typing.Dict[str,(str,int)]
+
+    for opener, unpaired_score, closer, mismatch_close_score in _INITIALIZING_TABLE:
+        unpaired_score_by_opener[opener] = unpaired_score
+        expected_opener_and_mismatch_score_by_closer[closer] = (opener, mismatch_close_score)
+
+    return unpaired_score_by_opener, expected_opener_and_mismatch_score_by_closer
+
+
+def scan(line, unpaired_info_by_opener, mismatch_info_by_closer):
     """
     TODO EXPLAIN
 
     :param str line:
+    :param dict[str,int] unpaired_info_by_opener:
+    :param dict[str,(str,int)] mismatch_info_by_closer:
 
     :return:
     :rtype: (int, int) | None
@@ -66,11 +79,11 @@ def scan(line):
 
     unfinished_nodes = []   # type: typing.List[Node]
     for ch in line:
-        if ch not in EXPECTED_OPENER_AND_SCORE_BY_CLOSER:
+        if ch not in mismatch_info_by_closer:
             node = Node(ch)
             unfinished_nodes.append(node)
         else:
-            expected_opener, score = EXPECTED_OPENER_AND_SCORE_BY_CLOSER[ch]
+            expected_opener, score = mismatch_info_by_closer[ch]
             node = unfinished_nodes.pop()
             parent_node = unfinished_nodes[-1]
             parent_node.children.append(node)
@@ -86,7 +99,7 @@ def scan(line):
         completeness_score = 0
         for node in unfinished_nodes:
             completeness_score *= 5
-            addend = COMPLETENESS_POINTS_BY_OPENER[node.opener]
+            addend = unpaired_info_by_opener[node.opener]
             completeness_score += addend
 
         return COMPLETENESS_ERROR, completeness_score
@@ -99,11 +112,12 @@ def main():
     :return: None
     """
     lines = load_input()
+    unmatched_score_by_opener, mismatch_info_by_closer = get_scoring_basis()
 
     score_by_error = {}  # type: typing.Dict[int,int]
     for line in lines:
         # Scan the line; it can be ignored unless there's an error
-        error = scan(line)
+        error = scan(line, unmatched_score_by_opener, mismatch_info_by_closer)
         if error:
             # There's an error; increment the respective error-type's score
             error_type, score = error
