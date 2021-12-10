@@ -18,20 +18,6 @@ SYNTAX_ERROR = 0
 COMPLETENESS_ERROR = 1
 
 
-class Node(object):
-    """
-    TODO EXPLAIN
-    """
-
-    def __init__(self, opener):
-        """
-        :param str opener:
-        """
-        self.opener = opener
-        self.closer = None
-        self.children = []  # type: typing.List[Node]
-
-
 def load_input(path="input.txt"):
     """
     TODO EXPLAIN
@@ -77,29 +63,24 @@ def scan(line, unpaired_info_by_opener, mismatch_info_by_closer):
     :rtype: (int, int) | None
     """
 
-    unfinished_nodes = []   # type: typing.List[Node]
+    unpaired_openers = []   # type: typing.List[str]
     for ch in line:
         if ch not in mismatch_info_by_closer:
-            node = Node(ch)
-            unfinished_nodes.append(node)
+            unpaired_openers.append(ch)
         else:
             expected_opener, score = mismatch_info_by_closer[ch]
-            node = unfinished_nodes.pop()
-            parent_node = unfinished_nodes[-1]
-            parent_node.children.append(node)
-
-            actual_opener = node.opener
+            actual_opener = unpaired_openers.pop()
             if actual_opener != expected_opener:
                 return SYNTAX_ERROR, score
 
     # If there are unpaired symbols, this is where we get a completeness error
-    if not unfinished_nodes:
+    if not unpaired_openers:
         return None
     else:
         completeness_score = 0
-        for node in unfinished_nodes:
+        for opener in unpaired_openers:
             completeness_score *= 5
-            addend = unpaired_info_by_opener[node.opener]
+            addend = unpaired_info_by_opener[opener]
             completeness_score += addend
 
         return COMPLETENESS_ERROR, completeness_score
