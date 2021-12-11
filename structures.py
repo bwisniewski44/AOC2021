@@ -59,6 +59,27 @@ class Grid(object):
     TODO EXPLAIN
     """
 
+    @staticmethod
+    def load(path):
+        """
+        TODO EXPLAIN
+
+        :param str path:
+
+        :return:
+        :rtype: Grid
+        """
+
+        with open(path) as infile:
+            lines = [str.strip(line) for line in infile.readlines()]
+
+        height = len(lines)
+        values = []  # type: typing.List[int]
+        for digits in lines:
+            values.extend(int(digit) for digit in digits)
+
+        return Grid(values, height)
+
     DIRECTIONS = KeySet()
 
     UP_LEFT,\

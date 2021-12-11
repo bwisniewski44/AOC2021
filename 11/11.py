@@ -9,24 +9,13 @@ import typing
 from structures import Grid
 
 
-def load_input(path="input.txt"):
-    """
-    TODO EXPLAIN
-
-    :param str path: path to the file to read as input to this script
-
-    :return:
-    """
-    pass
-
-
 def main():
     """
     TODO EXPLAIN
 
     :return: None
     """
-    pass
+    grid = Grid.load("input.txt")
 
 
 if __name__ == "__main__":

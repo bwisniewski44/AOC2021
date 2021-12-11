@@ -9,26 +9,6 @@ import typing
 from structures import Grid
 
 
-def load_input(path="input.txt"):
-    """
-    TODO EXPLAIN
-
-    :param str path: path to the file to read as input to this script
-
-    :return:
-    :rtype: Grid
-    """
-
-    with open(path) as infile:
-        lines = [str.strip(line) for line in infile.readlines()]
-
-    digits = "".join(lines)
-    value_sequence = [int(digit) for digit in list(digits)]
-    grid = Grid(value_sequence, len(lines))
-
-    return grid
-
-
 def assess_risk(height_ranking):
     """
     TODO EXPLAIN
@@ -184,7 +164,7 @@ def main():
 
     :return: None
     """
-    grid = load_input()
+    grid = Grid.load("input.txt")
     minima = find_minima(grid)
     print(sum(assess_risk(grid[coordinate]) for coordinate in minima))
 
