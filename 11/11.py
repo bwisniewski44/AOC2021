@@ -5,6 +5,9 @@ This script is part of a solution set devised to complete the 'Advent of Code' p
 https://adventofcode.com/2021
 """
 
+import typing
+from structures import Grid
+
 
 def load_input(path="input.txt"):
     """
