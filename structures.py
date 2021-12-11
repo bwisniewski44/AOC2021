@@ -211,3 +211,6 @@ class Grid(object):
 
         index = row * self.width + col
         self._values[index] = value
+
+    def __len__(self):
+        return len(self._values)
