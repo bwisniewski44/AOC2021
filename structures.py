@@ -2,6 +2,36 @@
 TODO EXPLAIN
 """
 
+from collections.abc import Hashable
+
+
+class KeySet(dict):
+    """
+    This object contains a set of identifying values, optionally storing a piece of information for each.
+
+    TODO EXPLAIN MORE
+    """
+
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+
+    def define(self, key, item=None):
+        """
+        TODO EXPLAIN
+
+        :param Hashable key:
+        :param object item:
+
+        :raises KeyError: on key collision
+
+        :return: echoes back the key
+        :rtype: Any
+        """
+
+        if self.__contains__(key):
+            raise KeyError(f"Key set already contains key {repr(key)}")
+        self.__setitem__(key, item)
+
 
 class Grid(object):
     """
