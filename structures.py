@@ -3,6 +3,7 @@ TODO EXPLAIN
 """
 
 from collections.abc import Hashable
+import typing
 
 
 class KeySet(dict):
@@ -32,23 +33,54 @@ class KeySet(dict):
             raise KeyError(f"Key set already contains key {repr(key)}")
         self.__setitem__(key, item)
 
+    def enumerate(self, spec):
+        """
+        TODO EXPLAIN
+
+        :param int|Iterable spec:
+
+        :return:
+        :rtype: tuple[int]
+        """
+
+        keys = []   # type: typing.List[int]
+        if isinstance(spec, int):
+            keys.extend(range(spec))
+        else:
+            for key, item in enumerate(spec):
+                keys.append(key)
+                self.define(key, item)
+
+        return tuple(keys)
+
 
 class Grid(object):
     """
     TODO EXPLAIN
     """
 
-    UP = 0
-    DOWN = 1
-    LEFT = 2
-    RIGHT = 3
+    DIRECTIONS = KeySet()
 
-    MODIFICATION_BY_MOVE = {
-        UP: (-1, 0),
-        DOWN: (1, 0),
-        LEFT: (0, -1),
-        RIGHT: (0, 1),
-    }
+    UP_LEFT,\
+        UP,\
+        UP_RIGHT,\
+        LEFT,\
+        RIGHT,\
+        DOWN_LEFT,\
+        DOWN,\
+        DOWN_RIGHT = \
+        DIRECTIONS.enumerate(
+            (
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+                (0, -1),
+                (0, 1),
+                (1, -1),
+                (1, 0),
+                (1, 1),
+            )
+        )   # type: int, int, int, int, int, int, int, int
 
     def __init__(self, sequence, height):
         """
@@ -98,9 +130,22 @@ class Grid(object):
         return self._values[index]
 
     def move(self, coordinate, direction):
-        modification = self.MODIFICATION_BY_MOVE[direction]
-        result_row = coordinate[0] + modification[0]
-        result_col = coordinate[1] + modification[1]
+        """
+        TODO EXPLAIN
+
+        :param (int,int) coordinate:
+        :param int direction:
+
+        :raises IndexError: on attempt to produce out-of-bounds coordinates
+
+        :return:
+        :rtype: (int,int)
+        """
+        if direction not in Grid.DIRECTIONS:
+            raise ValueError(f"Unrecognized direction specifier {repr(direction)}")
+        modification_vector = Grid.DIRECTIONS[direction]
+
+        result_row, result_col = (coordinate[i] + adjustment for i, adjustment in enumerate(modification_vector))
 
         if self.in_bounds(result_row, result_col):
             return result_row, result_col
