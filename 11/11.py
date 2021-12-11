@@ -74,10 +74,25 @@ def main():
     """
     grid = Grid.load("input.txt")
 
-    discharges = 0
-    for _ in range(100):
-        discharges += do_round(grid)
-    print(discharges)
+    # We've done enough rounds for both parts when each part has enough info...
+    # Part 1: we need 100 rounds
+    # Part 2: we need at least one of the rounds to have seen a full-board discharge
+    discharge_tallies = []  # type: typing.List[int]
+    synchronized_flash = None  # index of first synchronized flash
+    while len(discharge_tallies) < 100 or synchronized_flash is None:
+        # Get the tally of board positions which experienced discharge
+        latest_discharges = do_round(grid)
+
+        # If no synchronized flash has been seen before, note down this index
+        if synchronized_flash is None and latest_discharges == len(grid):
+            synchronized_flash = len(discharge_tallies)
+
+        # Add this tally at the index
+        discharge_tallies.append(latest_discharges)
+
+    # Loop has exited, meaning we have at least 100 tallies and at least 1 full-board discharge
+    print(sum(discharge_tallies[:100]))
+    print(synchronized_flash+1)
 
 
 if __name__ == "__main__":
