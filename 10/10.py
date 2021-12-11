@@ -78,7 +78,8 @@ def scan(line, unpaired_info_by_opener, mismatch_info_by_closer):
         return None
     else:
         completeness_score = 0
-        for opener in unpaired_openers:
+        while unpaired_openers:
+            opener = unpaired_openers.pop()
             completeness_score *= 5
             addend = unpaired_info_by_opener[opener]
             completeness_score += addend
@@ -95,17 +96,34 @@ def main():
     lines = load_input()
     unmatched_score_by_opener, mismatch_info_by_closer = get_scoring_basis()
 
-    score_by_error = {}  # type: typing.Dict[int,int]
+    syntax_error_sum = 0
+    completeness_error_values = []  # type: typing.List[int]
     for line in lines:
         # Scan the line; it can be ignored unless there's an error
         error = scan(line, unmatched_score_by_opener, mismatch_info_by_closer)
         if error:
-            # There's an error; increment the respective error-type's score
+            # What we do with the error depends on the kind of error
             error_type, score = error
-            old_score = score_by_error.get(error_type, 0)
-            score_by_error[error_type] = old_score + score
-    print(score_by_error.get(SYNTAX_ERROR, 0))
-    print(score_by_error.get(COMPLETENESS_ERROR, 0))
+            if error_type == SYNTAX_ERROR:
+                syntax_error_sum += score
+            elif error_type == COMPLETENESS_ERROR:
+                completeness_error_values.append(score)
+            else:
+                raise ValueError(f"Unrecognized error-type code {error_type}")
+
+    # Part 1: sum of syntax error scores
+    print(syntax_error_sum)
+
+    # Part 2: median completeness error scores
+    sorted_completeness_errors = sorted(completeness_error_values)
+    if len(sorted_completeness_errors) % 2 == 0:
+        raise \
+            ValueError(
+                f"Puzzle guarantees odd number of completeness scores, but encountered "
+                f"{len(sorted_completeness_errors)}"
+            )
+    median_index = len(sorted_completeness_errors) // 2
+    print(sorted_completeness_errors[median_index])
 
 
 if __name__ == "__main__":
