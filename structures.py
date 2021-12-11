@@ -191,3 +191,23 @@ class Grid(object):
             index = self.width * row + col
 
         return self._values[index]
+
+    def __setitem__(self, key, value):
+        """
+        TODO EXPLAIN
+
+        :param (int,int) key:
+        :param int value:
+
+        :return: None
+        """
+
+        # TODO: normalize keys!
+        row, col = key
+        if not (0 <= row < self.height):
+            raise Exception
+        if not (0 <= col < self.width):
+            raise Exception
+
+        index = row * self.width + col
+        self._values[index] = value
