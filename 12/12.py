@@ -17,20 +17,18 @@ class NodeInfo(object):
     TODO EXPLAIN
     """
 
+    # TODO: explain
+    SMALL = 0
+    LARGE = 1
+
     def __init__(self, name):
         """
         :param str name: TODO EXPLAIN
         """
         self.name = name
-        self.visitation_limit = 1 if name.islower() else None
+        self.size = NodeInfo.SMALL if name.islower() else NodeInfo.LARGE
         self.visits = 0
         self.neighbors = set()  # type: typing.Set[str]
-
-    @property
-    def accepting_visits(self):
-        if self.visitation_limit and self.visits >= self.visitation_limit:
-            return False
-        return True
 
 
 def add_destination(all_nodes, origin, destination):
@@ -118,9 +116,13 @@ def add_paths_from(node, info_by_node, all_paths, current_path=None):
     else:
         # This isn't the goal node; need to explore further nodes to be able to reach the goal
         for destination in node_info.neighbors:
-            # Skip the destination if visiting it would violate its visitation limit
-            if info_by_node[destination].accepting_visits:
-                add_paths_from(destination, info_by_node, all_paths, current_path)
+            # Skip the destination if it's small and we've already visited it
+            destination_info = info_by_node[destination]
+            if destination_info.size == NodeInfo.SMALL and destination_info.visits > 0:
+                continue
+
+            # Otherwise, visit the destination
+            add_paths_from(destination, info_by_node, all_paths, current_path)
 
     # All paths stemming from the 'current path' have been added; let's pop the node off the 'current path' as if we
     # never arrived here... the caller can then explore other routes to GOAL
