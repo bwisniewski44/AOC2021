@@ -22,9 +22,7 @@ class NodeInfo(object):
         :param str name: TODO EXPLAIN
         """
         self.name = name
-        if not name.isalpha():
-            raise ValueError(f"Expecting all-letters for node name, but encountered {repr(name)}")
-        self.visitation_limit = None if name.isupper() else 1
+        self.visitation_limit = None
         self.visits = 0
         self.neighbors = set()  # type: typing.Set[str]
 
@@ -68,9 +66,32 @@ def load_input(path="input.txt"):
 
     with open(path) as infile:
         for line in infile.readlines():
-            half_a, half_b = map(str.strip, line.split(SEPARATOR))  # type: str, str
+            # Extract and validate the content of this line
+            try:
+                half_a, half_b = map(str.strip, line.split(SEPARATOR))  # type: str, str
+            except ValueError:
+                raise \
+                    ValueError(
+                        f"Expecting exactly two elements, joined by separator '{SEPARATOR}'; found "
+                        f"{line.count(SEPARATOR)+1} element(s)"
+                    )
+            if half_a == half_b:
+                raise ValueError(f"Node {repr(half_a)} cannot be its own neighbor")
+            elif not all(name.isalpha() for name in {half_a, half_b}):
+                raise \
+                    ValueError(
+                        f"Expecting all-letters for node names; encountered: "
+                        f"{', '.join(repr(name) for name in {half_a, half_b})}"
+                    )
+
+            # Ensure the nodes are registered and see each other as neighbors
             add_destination(info_by_node, half_a, half_b)
             add_destination(info_by_node, half_b, half_a)
+
+    # At this point, all the nodes' relationships have been defined; safe to set their visitation limits
+    for node, info in info_by_node.items():
+        if node.islower():
+            info.visitation_limit = 1
 
     return info_by_node
 
