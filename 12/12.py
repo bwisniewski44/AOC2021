@@ -22,7 +22,7 @@ class NodeInfo(object):
         :param str name: TODO EXPLAIN
         """
         self.name = name
-        self.visitation_limit = None
+        self.visitation_limit = 1 if name.islower() else None
         self.visits = 0
         self.neighbors = set()  # type: typing.Set[str]
 
@@ -87,11 +87,6 @@ def load_input(path="input.txt"):
             # Ensure the nodes are registered and see each other as neighbors
             add_destination(info_by_node, half_a, half_b)
             add_destination(info_by_node, half_b, half_a)
-
-    # At this point, all the nodes' relationships have been defined; safe to set their visitation limits
-    for node, info in info_by_node.items():
-        if node.islower():
-            info.visitation_limit = 1
 
     return info_by_node
 
