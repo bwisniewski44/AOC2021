@@ -26,7 +26,7 @@ class NodeInfo(object):
         :param str name: TODO EXPLAIN
         """
         self.name = name
-        self.size = NodeInfo.SMALL if name.islower() else NodeInfo.LARGE
+        self.size = NodeInfo.LARGE if name.isupper() else NodeInfo.SMALL
         self.visits = 0
         self.neighbors = set()  # type: typing.Set[str]
 
@@ -89,14 +89,16 @@ def load_input(path="input.txt"):
     return info_by_node
 
 
-def add_paths_from(node, info_by_node, all_paths, current_path=None):
+def add_paths_from(node, info_by_node, all_paths, allow_double_dipping, current_path=None, double_dipped=False):
     """
     TODO EXPLAIN
 
     :param str node:
     :param dict[str,NodeInfo] info_by_node:
     :param list[list[str]] all_paths:
+    :param bool allow_double_dipping:
     :param list[str] | None current_path:
+    :param bool double_dipped:
 
     :return: None
     """
@@ -110,19 +112,25 @@ def add_paths_from(node, info_by_node, all_paths, current_path=None):
     current_path.append(node)
     node_info = info_by_node[node]
     node_info.visits += 1
+    if node_info.size == NodeInfo.SMALL and node_info.visits == 2:
+        double_dipped = True
 
     if node == KEY_GOAL:
         all_paths.append(list(current_path))
     else:
         # This isn't the goal node; need to explore further nodes to be able to reach the goal
         for destination in node_info.neighbors:
-            # Skip the destination if it's small and we've already visited it
+            # We can visit bigger nodes whenever we want; the smaller nodes however have limits, so if we've visited the
+            # node before...
             destination_info = info_by_node[destination]
             if destination_info.size == NodeInfo.SMALL and destination_info.visits > 0:
-                continue
+                # ... we can only re-visit (double-dip) only if we've yet to double-dip AND if the node is neither the
+                # start/end nodes; so, if we've already double-dipped or the dest. would otherwise be start/end, skip
+                if not allow_double_dipping or double_dipped or destination in {KEY_START, KEY_GOAL}:
+                    continue
 
-            # Otherwise, visit the destination
-            add_paths_from(destination, info_by_node, all_paths, current_path)
+            # We haven't "continued", so we must be OK to proceed to destination
+            add_paths_from(destination, info_by_node, all_paths, allow_double_dipping, current_path, double_dipped)
 
     # All paths stemming from the 'current path' have been added; let's pop the node off the 'current path' as if we
     # never arrived here... the caller can then explore other routes to GOAL
@@ -138,10 +146,11 @@ def main():
     """
     info_by_node = load_input()
 
-    all_paths = []  # type: typing.List[typing.List[str]]
-    add_paths_from(KEY_START, info_by_node, all_paths)
-
-    print(len(all_paths))
+    legality_modes = [False, True]
+    for allow_double_dipping in legality_modes:
+        all_paths = []  # type: typing.List[typing.List[str]]
+        add_paths_from(KEY_START, info_by_node, all_paths, allow_double_dipping)
+        print(len(all_paths))
 
 
 if __name__ == "__main__":
