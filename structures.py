@@ -196,7 +196,7 @@ class Grid(object):
 
         return self._values[index]
 
-    def _get_vector_positions(self, dimension, index):
+    def get_vector_positions(self, dimension, index):
         """
         TODO EXPLAIN
 
@@ -278,7 +278,7 @@ class Grid(object):
 
         # Ensure that the number of values supplied precisely matches the number of values expected for a vector in this
         # dimension; then, add the values to this object
-        insertion_positions = self._get_vector_positions(dimension, index)
+        insertion_positions = self.get_vector_positions(dimension, index)
         if len(insertion_positions) != len(values):
             raise ValueError(f"Expecting {len(insertion_positions)} elements in {len(values)}-length values vector")
         for i, insertion_index in enumerate(insertion_positions):
@@ -299,7 +299,7 @@ class Grid(object):
         # Ensure we have a sensible index
         if index is None:
             index = self._get_max_legal_index(dimension)
-        positions_to_remove = self._get_vector_positions(dimension, index)
+        positions_to_remove = self.get_vector_positions(dimension, index)
 
         removed_values = []
         while positions_to_remove:
@@ -323,29 +323,46 @@ class Grid(object):
 
         if index is None:
             index = self._get_max_legal_index(dimension)
-        positions_to_read = self._get_vector_positions(dimension, index)
+        positions_to_read = self.get_vector_positions(dimension, index)
 
         result = [self._values[i] for i in positions_to_read]
         return result
+
+    def dimlen(self, dimension):
+        if dimension == Grid.HORIZONTAL:
+            return self.height
+        elif dimension == Grid.VERTICAL:
+            return self.width
+        else:
+            raise ValueError(f"Unexpected dimension code {dimension}")
 
     def __setitem__(self, key, value):
         """
         TODO EXPLAIN
 
-        :param (int,int) key:
+        :param (int,int)|int key:
         :param int value:
 
         :return: None
         """
 
         # TODO: normalize keys!
-        row, col = key
-        if not (0 <= row < self.height):
-            raise Exception
-        if not (0 <= col < self.width):
-            raise Exception
+        if isinstance(key, int):
+            index = key
+        elif isinstance(key, tuple):
+            try:
+                row, col = key
+            except ValueError:
+                raise ValueError(f"Expecting 2-tuple giving (i,j) coordinates; received {len(key)}-tuple")
+            else:
+                if not (0 <= row < self.height):
+                    raise IndexError
+                if not (0 <= col < self.width):
+                    raise IndexError
+                index = row * self.width + col
+        else:
+            raise TypeError(f"Expecting int or 2-tuple specifier; got {type(key)}")
 
-        index = row * self.width + col
         self._values[index] = value
 
     def __len__(self):
