@@ -103,9 +103,13 @@ class Grid(object):
             )
         )   # type: int, int, int, int, int, int, int, int
 
+
+    DIMENSIONS = KeySet()
+    HORIZONTAL, VERTICAL = DIMENSIONS.enumerate(2)
+
     def __init__(self, sequence, height):
         """
-        :param list[int] sequence:
+        :param list[int] sequence: TODO EXPLAIN
         :param int height:
         """
 
@@ -192,24 +196,173 @@ class Grid(object):
 
         return self._values[index]
 
+    def get_vector_positions(self, dimension, index):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param int index:
+
+        :return:
+        :rtype: list[int]
+        """
+
+        # Count the number of vectors aligned along the specified dimension
+        if dimension == Grid.HORIZONTAL:
+            current_vector_count = self.height
+            element_count = self.width
+            element_index = index * self.width
+            index_increment = 1
+        elif dimension == Grid.VERTICAL:
+            current_vector_count = self.width
+            element_count = self.height
+            element_index = index
+            index_increment = self.width
+        else:
+            raise ValueError(f"Encountered unexpected dimension code {dimension}")
+
+        # Enforce the index restriction
+        if not (0 <= index < current_vector_count):
+            raise \
+                IndexError(
+                    f"Vector index specification {index} violates legal range [0,{current_vector_count}) for "
+                    f"{self.height}x{self.width} grid"
+                )
+
+        # We survived to this point: must be a valid ask; let's gather the positions of the specified vector
+        element_indices = []    # type: typing.List[int]
+        while len(element_indices) < element_count:
+            element_indices.append(element_index)
+            element_index += index_increment
+
+        return element_indices
+
+    def _get_max_legal_index(self, dimension):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+
+        :return:
+        :rtype: int
+        """
+
+        if dimension == Grid.HORIZONTAL:
+            max_legal_index = self.height - 1
+        elif dimension == Grid.VERTICAL:
+            max_legal_index = self.width - 1
+        else:
+            raise ValueError(f"Unexpected dimension code {dimension}")
+
+        return max_legal_index
+
+    def add_vector(self, dimension, values, index=None):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param list[int] values:
+        :param int index:
+
+        :return: None
+        """
+
+        # Increment the respective dimension before anything; all the other functions invoked in here will work better
+        # if we've tricked them into thinking that we're at the correct width/height already
+        if dimension == Grid.HORIZONTAL:
+            self._height += 1
+        elif dimension == Grid.VERTICAL:
+            self._width += 1
+        if index is None:
+            index = self._get_max_legal_index(dimension)
+
+        # Ensure that the number of values supplied precisely matches the number of values expected for a vector in this
+        # dimension; then, add the values to this object
+        insertion_positions = self.get_vector_positions(dimension, index)
+        if len(insertion_positions) != len(values):
+            raise ValueError(f"Expecting {len(insertion_positions)} elements in {len(values)}-length values vector")
+        for i, insertion_index in enumerate(insertion_positions):
+            insertion_value = values[i]
+            self._values.insert(insertion_index, insertion_value)
+
+    def remove_vector(self, dimension, index=None):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param int index:
+
+        :return:
+        :rtype: list[int]
+        """
+
+        # Ensure we have a sensible index
+        if index is None:
+            index = self._get_max_legal_index(dimension)
+        positions_to_remove = self.get_vector_positions(dimension, index)
+
+        removed_values = []
+        while positions_to_remove:
+            next_index = positions_to_remove.pop()
+            next_value = self._values.pop(next_index)
+            removed_values.append(next_value)
+
+        original_values = reversed(removed_values)
+        return original_values
+
+    def read_vector(self, dimension, index):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param int index:
+
+        :return:
+        :rtype: list[int]
+        """
+
+        if index is None:
+            index = self._get_max_legal_index(dimension)
+        positions_to_read = self.get_vector_positions(dimension, index)
+
+        result = [self._values[i] for i in positions_to_read]
+        return result
+
+    def dimlen(self, dimension):
+        if dimension == Grid.HORIZONTAL:
+            return self.height
+        elif dimension == Grid.VERTICAL:
+            return self.width
+        else:
+            raise ValueError(f"Unexpected dimension code {dimension}")
+
     def __setitem__(self, key, value):
         """
         TODO EXPLAIN
 
-        :param (int,int) key:
+        :param (int,int)|int key:
         :param int value:
 
         :return: None
         """
 
         # TODO: normalize keys!
-        row, col = key
-        if not (0 <= row < self.height):
-            raise Exception
-        if not (0 <= col < self.width):
-            raise Exception
+        if isinstance(key, int):
+            index = key
+        elif isinstance(key, tuple):
+            try:
+                row, col = key
+            except ValueError:
+                raise ValueError(f"Expecting 2-tuple giving (i,j) coordinates; received {len(key)}-tuple")
+            else:
+                if not (0 <= row < self.height):
+                    raise IndexError
+                if not (0 <= col < self.width):
+                    raise IndexError
+                index = row * self.width + col
+        else:
+            raise TypeError(f"Expecting int or 2-tuple specifier; got {type(key)}")
 
-        index = row * self.width + col
         self._values[index] = value
 
     def __len__(self):
