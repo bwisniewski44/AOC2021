@@ -6,6 +6,7 @@ https://adventofcode.com/2021
 """
 
 import typing
+from structures import KeySet
 
 KEY_GOAL = "end"
 KEY_START = "start"
@@ -14,16 +15,16 @@ SEPARATOR = "-"
 
 class NodeInfo(object):
     """
-    TODO EXPLAIN
+    Info-structure containing information about a cave in a network of caves.
     """
 
-    # TODO: explain
-    SMALL = 0
-    LARGE = 1
+    # Caves have different sizes; set some codes by which to distinguish them
+    SIZES = KeySet()
+    SMALL, LARGE = SIZES.enumerate(2)
 
     def __init__(self, name):
         """
-        :param str name: TODO EXPLAIN
+        :param str name: identifying name of this node
         """
         self.name = name
         self.size = NodeInfo.LARGE if name.isupper() else NodeInfo.SMALL
@@ -33,20 +34,25 @@ class NodeInfo(object):
 
 def add_destination(all_nodes, origin, destination):
     """
-    TODO EXPLAIN
+    Ensures that the ``all_nodes`` dictionary has a ``NodeInfo`` instance keyed under the name of the origin and that
+    such an instance recognizes the possibility of traveling to the destination therefrom.
 
-    :param dict[str,NodeInfo] all_nodes:
-    :param str origin:
-    :param str destination:
+    :param dict[str,NodeInfo] all_nodes: node-info structures, keyed by the name of the respective structure
+    :param str origin: identifying name of node from which travel may originate
+    :param str destination: identifying name of node to which travel may occur
 
     :return: None
     """
 
+    # Resolve the origin-node structure, defining it if necessary
     if origin in all_nodes:
         node_info = all_nodes[origin]
     else:
+        # The 'all-nodes' dictionary doesn't yet have this name; add it
         node_info = NodeInfo(origin)
         all_nodes[origin] = node_info
+
+    # Ensure that the destination is among those reachable by the origin
     node_info.neighbors.add(destination)
 
 
@@ -64,7 +70,7 @@ def load_input(path="input.txt"):
 
     with open(path) as infile:
         for line in infile.readlines():
-            # Extract and validate the content of this line
+            # Extract the two names contained in this line
             try:
                 half_a, half_b = map(str.strip, line.split(SEPARATOR))  # type: str, str
             except ValueError:
@@ -73,6 +79,8 @@ def load_input(path="input.txt"):
                         f"Expecting exactly two elements, joined by separator '{SEPARATOR}'; found "
                         f"{line.count(SEPARATOR)+1} element(s)"
                     )
+
+            # Ensure that each name is distinct and composed entirely by letters (no whitespace, special chars, etc.)
             if half_a == half_b:
                 raise ValueError(f"Node {repr(half_a)} cannot be its own neighbor")
             elif not all(name.isalpha() for name in {half_a, half_b}):
@@ -93,11 +101,11 @@ def add_paths_from(node, info_by_node, all_paths, allow_double_dipping, current_
     """
     TODO EXPLAIN
 
-    :param str node:
-    :param dict[str,NodeInfo] info_by_node:
-    :param list[list[str]] all_paths:
-    :param bool allow_double_dipping:
-    :param list[str] | None current_path:
+    :param str node: node to append to the current path, and from which continued exploration shall be launched
+    :param dict[str,NodeInfo] info_by_node: node-info structures, keyed by the respective node name
+    :param list[list[str]] all_paths: container into which to place newly-found legal paths
+    :param bool allow_double_dipping: TRUE to allow return to enable "double-dipping" into a small cave
+    :param list[str] | None current_path: path of nodes
     :param bool double_dipped:
 
     :return: None
