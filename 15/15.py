@@ -55,7 +55,8 @@ def populate_optimum(results, grid, path, stop, accumulated_penalty, legal_moves
     :return: None
     """
 
-    # BASE CASE: the optimum is already better than this competing score - stop trying
+    # BASE CASE: the current penalty has already accrued to a value in excess of that for the current optimum; we can
+    # stop trying
     if results.score <= accumulated_penalty:
         global DECLINED
         DECLINED += 1
