@@ -8,27 +8,41 @@ https://adventofcode.com/2021
 import typing
 from structures import Grid
 
+DECLINED = 0
 
-def find_optimal_path_from(grid, coordinate=(0, 0), current_score=0):
+
+def populate_optimum(grid, goal, current_optimum, coordinate=(0, 0), current_score=0):
     """
     Gives the score associated with the optimal path from the given coordinate of the board to the goal coordinate.
 
     :param Grid grid: board over which to traverse
-    :param (int,int) coordinate: latest-entered position; the position from which to move to another
+    :param (int,int) goal: position marking the end of the path
+    :param int current_optimum:
+    :param (int,int) coordinate: latest-entered position; this shall either be the goal position (base case) or that
+      from which to move towards the goal position
     :param int current_score: score already accumulated by entering the given coordinate
 
     :return: score associated with most-optimal path from the given coordinate
     :rtype: int
     """
 
-    # BASE CASE: we're at the goal position
-    row, col = coordinate
-    if row+1 == grid.height and col+1 == grid.width:
-        result_score = current_score
+    # BASE CASE: the optimum is already better than this competing score - stop trying
+    if current_optimum <= current_score:
+        optimum = current_optimum
+        global DECLINED
+        DECLINED += 1
+        if DECLINED % 10000 == 0:
+            print(f"Shorted {DECLINED} paths")
 
-    # RECURSIVE CASE: we have to choose the optimal of two paths: one if moving to the right, another moving downwards
+    # BASE CASE: we're at the goal position... this must be the new optimum
+    elif coordinate == goal:
+        optimum = current_score
+        print(f"Found optimum {optimum}")
+
+    # RECURSIVE CASE: the current score is still better than the latest optimum, but we've yet to reach the necessary
+    # position; let's continue accumulating onto this competing score as we head towards the goal
     else:
-        result_score = None
+        optimum = current_optimum
         for direction in {Grid.DOWN, Grid.RIGHT}:
             # Resolve the coordinate to which to move
             try:
@@ -36,11 +50,12 @@ def find_optimal_path_from(grid, coordinate=(0, 0), current_score=0):
             except IndexError:
                 continue  # oh well, must be at edge of grid
             destination_value = grid[next_coordinate]
-            inner_score = find_optimal_path_from(grid, next_coordinate, current_score + destination_value)
-            if result_score is None or inner_score < result_score:
-                result_score = inner_score
+            optimum = \
+                populate_optimum(
+                    grid, goal, optimum, coordinate=next_coordinate, current_score=current_score+destination_value
+                )
 
-    return result_score
+    return optimum
 
 
 def main():
@@ -51,8 +66,9 @@ def main():
     """
     board = Grid.load("input.txt")
 
-    result_score = find_optimal_path_from(board)
-    print(result_score)
+    goal = (board.height-1, board.width-1)
+    result = populate_optimum(board, goal, board.width * board.height * 9)
+    print(result)
 
 
 if __name__ == "__main__":
