@@ -80,7 +80,7 @@ class Grid(object):
 
         return Grid(values, height)
 
-    DIRECTIONS = KeySet()
+    DIRECTIONS = KeySet()   # type: KeySet[int,typing.Tuple[int,int]]
 
     UP_LEFT,\
         UP,\
