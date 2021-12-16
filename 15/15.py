@@ -151,6 +151,57 @@ def search(grid, start_coordinates, goal_coordinates):
     return path
 
 
+def expand(grid, factor):
+    """
+    TODO EXPLAIN
+
+    :param Grid grid:
+    :param int factor:
+
+    :return:
+    :rtype: Grid
+    """
+
+    new_height = grid.height * factor
+    new_width = grid.width * factor
+    new_quantity = new_height * new_width
+
+    new_grid = Grid([0 for _ in range(new_quantity)], new_height)
+    for i in range(new_grid.height):
+        for j in range(new_grid.width):
+            tiles_down = i // grid.height
+            tiles_over = j // grid.width
+            adjustment = tiles_over + tiles_down
+
+            basis_position = (i % grid.height, j % grid.width)
+            basis_value = grid[basis_position]
+            adjusted_value = (basis_value + adjustment) % 9
+            if adjusted_value == 0:
+                adjusted_value = 9
+            new_grid[i, j] = adjusted_value
+
+    return new_grid
+
+
+def find_path(board):
+    """
+    TODO EXPLAIN
+
+    :param Grid board:
+
+    :return:
+    :rtype: (int, list[(int,int)])
+    """
+
+    begin = (0, 0)
+    goal = (board.height-1, board.width-1)
+
+    path = search(board, begin, goal)
+    score = sum(board[coordinate] for coordinate in path) - board[begin]
+
+    return score, path
+
+
 def main():
     """
     TODO EXPLAIN
@@ -159,11 +210,13 @@ def main():
     """
     board = Grid.load("input.txt")
 
-    begin = (0, 0)
-    goal = (board.height-1, board.width-1)
+    # Part 1
+    score, path = find_path(board)
+    print(f"{score} for path: {path}")
 
-    path = search(board, begin, goal)
-    score = sum(board[coordinate] for i, coordinate in enumerate(path) if i > 0)
+    # Part 2
+    board = expand(board, 5)
+    score, path = find_path(board)
     print(f"{score} for path: {path}")
 
 
