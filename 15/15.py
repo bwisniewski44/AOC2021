@@ -4,149 +4,129 @@ TODO EXPLAIN
 This script is part of a solution set devised to complete the 'Advent of Code' puzzles, year 2021:
 https://adventofcode.com/2021
 """
-import math
+
 import typing
-from math import factorial
+from collections import deque
 from structures import Grid
 
-DECLINED = 0
 
+class Node:
+    def __init__(self, coordinate):
+        self.parent = None
+        self.position = coordinate
 
-class Results:
-    def __init__(self, max_penalty):
+        self.g = 0
+        self.f = 0
+        self.h = 0
+
+    def __eq__(self, other):
         """
-        :param int max_penalty: TODO EXPLAIN
+        TODO EXPLAIN
+
+        :param Node other:
+
+        :return:
+        :rtype: bool
         """
-        self.score = max_penalty    # type: int
-        self.steps = None           # type: typing.Optional[typing.List[typing.Tuple[int,int]]]    # seq. of coords
+        return self.position == other.position
+
+    def __repr__(self):
+        return f"({self.position[0]},{self.position[1]}): g{self.g} f{self.f} h{self.h}"
 
 
-def calculate_paths(begin_coordinates, end_coordinates):
-    """
-    Gives the number of combinations of HORIZONTAL and VERTICAL moves required to get from an origin coordinate to an
-    end coordinate.
-
-    :param (int,int) begin_coordinates:
-    :param (int,int) end_coordinates:
-
-    :return:
-    :rtype: int
-    """
-
-    x_delta = abs(end_coordinates[0] - begin_coordinates[0])
-    y_delta = abs(end_coordinates[1] - begin_coordinates[1])
-
-    combinations = factorial(x_delta + y_delta) // (factorial(x_delta) * factorial(y_delta))
-
-    return combinations
-
-
-def get_pass(key, remaining_passes_by_key):
+def resolve_path(current_node):
     """
     TODO EXPLAIN
 
-    :param key:
-    :param dict[int,int] remaining_passes_by_key:
+    :param Node current_node:
 
-    :return: TRUE if a pass was granted
-    :rtype: bool | None
+    :return:
+    :rtype: list[(int,int)]
     """
 
-    if key not in remaining_passes_by_key:
-        return None
-    else:
-        remaining_passes = remaining_passes_by_key[key]
-        if remaining_passes == 0:
-            return False
-        else:
-            remaining_passes_by_key[key] = remaining_passes - 1
-            return True
+    # Follow the chain of nodes up to root
+    visitation_order = deque()  # type: typing.Deque[typing.Tuple[int,int]]
+    while current_node is not None:
+        visitation_order.appendleft(current_node.position)
+        current_node = current_node.parent
+
+    return list(visitation_order)
 
 
-def update_declined(current_minimum):
-    global DECLINED
-    DECLINED += 1
-    if DECLINED % 100000 == 0:
-        print(f"Shorted {DECLINED} times; current min: {current_minimum}")
-
-
-def populate_optimum(results, grid, path, stop, accumulated_penalty, legal_moves, limit_by_penalty):
+def search(grid, start, end):
     """
-    Gives the score associated with the optimal path from the given coordinate of the board to the goal coordinate.
+    A* search algorithm, inspired by:
+    https://towardsdatascience.com/a-star-a-search-algorithm-eb495fb156bb
 
-    :param Results results: container into which to place optima
-    :param Grid grid: board over which to traverse
-    :param list[(int,int)] path: sequence of coordinates entered
-    :param (int,int) stop: coordinate of position to reach
-    :param int accumulated_penalty: penalty for all elements in path
-    :param set[int] legal_moves: codes identifying the legal directions in which movement towards goal may occur
-    :param dict[int,int] limit_by_penalty:
+    :param Grid grid:
+    :param (int,int) start:
+    :param (int, int) end:
 
-    :return: None
+    :return:
+    :rtype: list[(int,int)]
     """
 
-    global DECLINED
+    # Create the start and goal nodes
+    start_node = Node(start)
+    goal_node = Node(end)
 
-    # BASE CASE: the current penalty has already accrued to a value in excess of that for the current optimum; we can
-    # stop trying
-    if results.score <= accumulated_penalty:
-        update_declined(results.score)
+    # Initialize the 'yet-to-visit' and 'visited' lists
+    yet_to_visit = []   # type: typing.List[Node]
+    visited = set()     # type: typing.Set[typing.Tuple[int,int]]
 
-    # Otherwise, this penalty is lower than that which is the current optimum; if we're at the goal position, then we
-    # have a new optimum
-    elif path[-1] == stop:
-        results.score = accumulated_penalty
-        results.steps = list(path)
-        print(f"Found optimum {results.score}")
+    # Introduce the start node to TODO to what?
+    yet_to_visit.append(start_node)  # TODO: maybe faster as heap/deque?
 
-    # Otherwise, the current score is still better than the latest optimum, but we've yet to reach the necessary
-    # position; let's continue accruing penalty as we head towards the goal
-    else:
-        for direction in {Grid.DOWN, Grid.RIGHT}:
-            # Resolve the coordinate to which to move
+    # While there are nodes to search...
+    while yet_to_visit:
+
+        # Search for the most-optimal node; we'll select the leading node and iterate through all others to find that
+        # with the best 'f'
+        current_node = yet_to_visit[0]
+        current_index = 0
+        i = 1
+        while i < len(yet_to_visit):
+            alternative_node = yet_to_visit[i]
+            if alternative_node.f < current_node.f:
+                current_node = alternative_node
+                current_index = i
+
+            i += 1
+
+        # If the node is the goal node, then we can stop
+        if current_node == goal_node:
+            return resolve_path(current_node)
+
+        # We're still here, so we still have progress to make towards goal; begin by transferring the node out of the
+        # 'yet-to-visit' list and into the 'visited' list
+        yet_to_visit.pop(current_index)
+        visited.add(current_node.position)
+
+        # Find the children node to which we may travel
+        for move_direction in (Grid.DOWN, Grid.RIGHT, Grid.UP, Grid.LEFT):
             try:
-                next_coordinate = grid.move(path[-1], direction)  # IndexError if out-of-bounds
-                destination_penalty = grid[next_coordinate]
+                next_coordinates = grid.move(current_node.position, move_direction)
             except IndexError:
-                continue  # oh well, must be at edge of grid
-
-            acquired = get_pass(destination_penalty, limit_by_penalty)
-            if acquired is False:
-                update_declined(results.score)
                 continue
 
-            # Introduce the destination to the path
-            path.append(next_coordinate)
-            accumulated_penalty += destination_penalty
-            populate_optimum(results, grid, path, stop, accumulated_penalty, legal_moves, limit_by_penalty)
+            # Disqualify this destination if it's already been visited
+            if next_coordinates in visited:
+                continue
 
-            # Back away from the destination
-            path.pop()
-            accumulated_penalty -= destination_penalty
-            if acquired:
-                limit_by_penalty[destination_penalty] += 1
+            # Define the destination's properties, then add to the 'yet to visit' list
+            destination = Node(next_coordinates)
+            destination.parent = current_node
+            destination.g = current_node.g + grid[next_coordinates]
+            destination.h = (
+                    abs(destination.position[0] - goal_node.position[0]) +
+                    abs(destination.position[1] - goal_node.position[1])
+                )
+            destination.f = destination.g + destination.h
 
-
-def build_allowances(begin, end, allowance):
-    """
-    TODO EXPLAIN
-
-    :param (int,int) begin:
-    :param (int,int) end:
-    :param float allowance: percentage of moves which may be the maximally-costly
-
-    :return:
-    :rtype: dict[int,int]
-    """
-
-    allowances_by_penalty = {}
-    total_moves = sum(abs(end[i] - begin[i]) for i in range(len(end)))
-    exponent = math.log(1/allowance) / math.log(9)
-    for penalty in range(1, 9+1):
-        allowance = math.floor(total_moves / math.pow(penalty, exponent) + 0.5)
-        allowances_by_penalty[penalty] = allowance
-
-    return allowances_by_penalty
+            # Introduce this to the 'yet-to-visit' list if the node isn't already there OR if this one has a lower 'f'
+            if any(entrant == destination and entrant.f < destination.f for entrant in yet_to_visit):
+                continue
+            yet_to_visit.append(destination)
 
 
 def main():
@@ -159,12 +139,9 @@ def main():
 
     begin = (0, 0)
     goal = (board.height-1, board.width-1)
-    allowances_by_penalty = build_allowances(begin, goal, 0.15)
 
-    results = Results(board.width * board.height * 9)
-    current_path = [begin]
-    populate_optimum(results, board, current_path, goal, 0, {Grid.DOWN, Grid.RIGHT}, allowances_by_penalty)
-    print(f"{results.score}: {results.steps}")
+    path = search(board, begin, goal)
+    print(path)
 
 
 if __name__ == "__main__":
