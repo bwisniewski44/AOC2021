@@ -97,7 +97,7 @@ def search(grid, start_coordinates, goal_coordinates):
             i += 1
 
         # If the node is the goal node, then we can stop
-        if current_node == goal_coordinates:
+        if current_node.position == goal_coordinates:
             return resolve_path(current_node)
 
         # We're still here, so we still have progress to make towards goal; begin by transferring the node out of the
@@ -106,7 +106,7 @@ def search(grid, start_coordinates, goal_coordinates):
         visited.add(current_node.position)
 
         # Find the children node to which we may travel
-        for move_direction in (Grid.DOWN, Grid.RIGHT, Grid.UP, Grid.LEFT):
+        for move_direction in (Grid.DOWN, Grid.RIGHT):
             try:
                 next_coordinates = grid.move(current_node.position, move_direction)
             except IndexError:
