@@ -83,37 +83,24 @@ def search(grid, start_coordinates, goal_coordinates):
 
     # Initialize the 'yet-to-visit' and 'visited' structures
     frontier = PriorityQueue()
-    population_by_coordinate = {}  # type: typing.Dict[typing.Tuple[int,int], int]
-    visited = set()     # type: typing.Set[typing.Tuple[int,int]]
+    finalized = set()     # type: typing.Set[typing.Tuple[int,int]]
 
     # Introduce the start node to the frontier
     start_node = Node(start_coordinates)
-    frontier.push(start_node)  # TODO: maybe faster as heap/deque?
-    population_by_coordinate[start_node.position] = 1
+    frontier.push(start_node)
 
     # While there are nodes to search...
     path = None  # type: typing.Optional[typing.List[typing.Tuple[int,int]]]
     while len(frontier) > 0:
-
-        # Search for the most-optimal node; we'll select the leading node and iterate through all others to find that
-        # with the best 'f'
+        # Transfer the next node out of the pending nodes and into the processed nodes; if it was the goal node, then
+        # we're done
         optimal_node = frontier.pop()   # type: Node
-        updated_population = population_by_coordinate[optimal_node.position] - 1
-        if updated_population > 0:
-            population_by_coordinate[optimal_node.position] = updated_population
-        else:
-            population_by_coordinate.pop(optimal_node.position)
-
-        # If the node is the goal node, then we can stop
+        finalized.add(optimal_node.position)
         if optimal_node.position == goal_coordinates:
             path = resolve_path(optimal_node)
             break
 
-        # We're still here, so we still have progress to make towards goal; begin by transferring the node out of the
-        # 'yet-to-visit' list and into the 'visited' list
-        visited.add(optimal_node.position)
-
-        # Find the children node to which we may travel
+        # Introduce this node's neighbors to the frontier
         for move_direction in (Grid.DOWN, Grid.RIGHT):
             try:
                 next_coordinates = grid.move(optimal_node.position, move_direction)
@@ -121,7 +108,7 @@ def search(grid, start_coordinates, goal_coordinates):
                 continue
 
             # Disqualify this destination if it's already been visited
-            if next_coordinates in visited:
+            if next_coordinates in finalized:
                 continue
 
             # Define the destination's properties, then add to the 'yet to visit' list
@@ -132,21 +119,7 @@ def search(grid, start_coordinates, goal_coordinates):
                     abs(destination.position[1] - goal_coordinates[1])
                 )
             destination.f = destination.g + destination.h
-
-            # Introduce this to the 'yet-to-visit' list if the node isn't already there OR if this one has a lower 'f'
-            if destination.position not in population_by_coordinate:
-                introduce = True
-            else:
-                # Introduce only if this destination has optimal 'f'
-                introduce = True
-                for item in frontier._values:
-                    if item.position == destination.position and item.f < destination.f:
-                        introduce = False
-                        break
-            if introduce:
-                frontier.push(destination)
-                population_by_coordinate[destination.position] = \
-                    population_by_coordinate.get(destination.position, 0) + 1
+            frontier.push(destination)
 
     return path
 
@@ -162,22 +135,31 @@ def expand(grid, factor):
     :rtype: Grid
     """
 
+    # Resolve the dimensions of the expanded grid to be returned
     new_height = grid.height * factor
     new_width = grid.width * factor
     new_quantity = new_height * new_width
 
+    # Initialize a new grid of the expanded dimensions
     new_grid = Grid([0 for _ in range(new_quantity)], new_height)
+
+    # For each cell of the expanded, initialized grid...
     for i in range(new_grid.height):
         for j in range(new_grid.width):
-            tiles_down = i // grid.height
-            tiles_over = j // grid.width
-            adjustment = tiles_over + tiles_down
-
+            # Expansion involves expanding to a multiple of the original number of rows/cols; the values therein are
+            # based on those of the original board; for this position, resolve the original board position to which it
+            # corresponds
             basis_position = (i % grid.height, j % grid.width)
             basis_value = grid[basis_position]
-            adjusted_value = (basis_value + adjustment) % 9
-            if adjusted_value == 0:
-                adjusted_value = 9
+
+            # If this board is N over from the original board, then the value should be incremented N times
+            tiles_down = i // grid.height           # number of original board-heights down from the original board
+            tiles_over = j // grid.width            # number of original board-widths over from the original board
+            adjustment = tiles_over + tiles_down    # adjustments to apply to
+
+            # Values are on a 1-based, 9-digit system; before applying the adjustment, downshift to a 0-based system,
+            # apply the adjustment, MOD 9, then up-shift back to the 1-based system
+            adjusted_value = (((basis_value-1) + adjustment) % 9) + 1
             new_grid[i, j] = adjusted_value
 
     return new_grid
@@ -196,8 +178,12 @@ def find_path(board):
     begin = (0, 0)
     goal = (board.height-1, board.width-1)
 
+    import time
+    begin_time = time.time()
     path = search(board, begin, goal)
+    total_time = time.time() - begin_time
     score = sum(board[coordinate] for coordinate in path) - board[begin]
+    print(f"{score} in {total_time:2.2f}s. for path across {board.height}x{board.width} grid: {path}")
 
     return score, path
 
@@ -212,12 +198,10 @@ def main():
 
     # Part 1
     score, path = find_path(board)
-    print(f"{score} for path: {path}")
 
     # Part 2
     board = expand(board, 5)
     score, path = find_path(board)
-    print(f"{score} for path: {path}")
 
 
 if __name__ == "__main__":
