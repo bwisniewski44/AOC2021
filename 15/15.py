@@ -11,8 +11,12 @@ from structures import Grid
 
 
 class Node:
-    def __init__(self, coordinate):
-        self.parent = None
+    def __init__(self, coordinate, parent=None):
+        """
+        :param (int,int) coordinate: TODO EXPLAIN
+        :param Node parent:
+        """
+        self.parent = parent
         self.position = coordinate
 
         self.g = 0
@@ -53,22 +57,21 @@ def resolve_path(current_node):
     return list(visitation_order)
 
 
-def search(grid, start, end):
+def search(grid, start_coordinates, goal_coordinates):
     """
     A* search algorithm, inspired by:
     https://towardsdatascience.com/a-star-a-search-algorithm-eb495fb156bb
 
     :param Grid grid:
-    :param (int,int) start:
-    :param (int, int) end:
+    :param (int,int) start_coordinates:
+    :param (int, int) goal_coordinates:
 
     :return:
     :rtype: list[(int,int)]
     """
 
     # Create the start and goal nodes
-    start_node = Node(start)
-    goal_node = Node(end)
+    start_node = Node(start_coordinates)
 
     # Initialize the 'yet-to-visit' and 'visited' lists
     yet_to_visit = []   # type: typing.List[Node]
@@ -94,7 +97,7 @@ def search(grid, start, end):
             i += 1
 
         # If the node is the goal node, then we can stop
-        if current_node == goal_node:
+        if current_node == goal_coordinates:
             return resolve_path(current_node)
 
         # We're still here, so we still have progress to make towards goal; begin by transferring the node out of the
@@ -118,8 +121,8 @@ def search(grid, start, end):
             destination.parent = current_node
             destination.g = current_node.g + grid[next_coordinates]
             destination.h = (
-                    abs(destination.position[0] - goal_node.position[0]) +
-                    abs(destination.position[1] - goal_node.position[1])
+                    abs(destination.position[0] - goal_coordinates[0]) +
+                    abs(destination.position[1] - goal_coordinates[1])
                 )
             destination.f = destination.g + destination.h
 
@@ -141,7 +144,8 @@ def main():
     goal = (board.height-1, board.width-1)
 
     path = search(board, begin, goal)
-    print(path)
+    score = sum(board[coordinate] for i, coordinate in enumerate(path) if i > 0)
+    print(f"{score} for path: {path}")
 
 
 if __name__ == "__main__":
