@@ -1,7 +1,7 @@
 """
 TODO EXPLAIN
 """
-
+import heapq
 from collections.abc import Hashable
 import typing
 
@@ -364,6 +364,21 @@ class Grid(object):
             raise TypeError(f"Expecting int or 2-tuple specifier; got {type(key)}")
 
         self._values[index] = value
+
+    def __len__(self):
+        return len(self._values)
+
+
+class PriorityQueue:
+    def __init__(self):
+        self._values = []
+
+    def pop(self):
+        result = heapq.heappop(self._values)
+        return result
+
+    def push(self, item):
+        heapq.heappush(self._values, item)
 
     def __len__(self):
         return len(self._values)
