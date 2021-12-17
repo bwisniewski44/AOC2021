@@ -4,125 +4,10 @@ TODO EXPLAIN
 This script is part of a solution set devised to complete the 'Advent of Code' puzzles, year 2021:
 https://adventofcode.com/2021
 """
-import heapq
 import sys
 import typing
-from collections import deque, defaultdict
+from collections import defaultdict
 from structures import Grid, PriorityQueue
-
-
-class Node:
-    def __init__(self, coordinate, parent=None):
-        """
-        :param (int,int) coordinate: TODO EXPLAIN
-        :param Node parent:
-        """
-        self.parent = parent
-        self.position = coordinate
-
-        self.g = 0
-        self.f = 0
-        self.h = 0
-
-    def __lt__(self, other):
-        """
-        TODO EXPLAIN
-
-        :param Node other:
-
-        :return:
-        :rtype: bool
-        """
-        return self.f < other.f
-
-    def __eq__(self, other):
-        """
-        TODO EXPLAIN
-
-        :param Node other:
-
-        :return:
-        :rtype: bool
-        """
-        return self.position == other.position
-
-    def __repr__(self):
-        return f"({self.position[0]},{self.position[1]}): g{self.g} f{self.f} h{self.h}"
-
-
-def resolve_path(current_node):
-    """
-    TODO EXPLAIN
-
-    :param Node current_node:
-
-    :return:
-    :rtype: list[(int,int)]
-    """
-
-    # Follow the chain of nodes up to root
-    visitation_order = deque()  # type: typing.Deque[typing.Tuple[int,int]]
-    while current_node is not None:
-        visitation_order.appendleft(current_node.position)
-        current_node = current_node.parent
-
-    return list(visitation_order)
-
-
-def search(grid, start_coordinates, goal_coordinates):
-    """
-    A* search algorithm, inspired by:
-    https://towardsdatascience.com/a-star-a-search-algorithm-eb495fb156bb
-
-    :param Grid grid:
-    :param (int,int) start_coordinates:
-    :param (int, int) goal_coordinates:
-
-    :return:
-    :rtype: list[(int,int)] | None
-    """
-
-    # Initialize the 'yet-to-visit' and 'visited' structures
-    frontier = PriorityQueue()
-    finalized = set()     # type: typing.Set[typing.Tuple[int,int]]
-
-    # Introduce the start node to the frontier
-    start_node = Node(start_coordinates)
-    frontier.push(start_node)
-
-    # While there are nodes to search...
-    path = None  # type: typing.Optional[typing.List[typing.Tuple[int,int]]]
-    while len(frontier) > 0:
-        # Transfer the next node out of the pending nodes and into the processed nodes; if it was the goal node, then
-        # we're done
-        optimal_node = frontier.pop()   # type: Node
-        finalized.add(optimal_node.position)
-        if optimal_node.position == goal_coordinates:
-            path = resolve_path(optimal_node)
-            break
-
-        # Introduce this node's neighbors to the frontier
-        for move_direction in (Grid.DOWN, Grid.RIGHT):
-            try:
-                next_coordinates = grid.move(optimal_node.position, move_direction)
-            except IndexError:
-                continue
-
-            # Disqualify this destination if it's already been visited
-            if next_coordinates in finalized:
-                continue
-
-            # Define the destination's properties, then add to the 'yet to visit' list
-            destination = Node(next_coordinates, parent=optimal_node)
-            destination.g = optimal_node.g + grid[next_coordinates]
-            destination.h = (
-                    abs(destination.position[0] - goal_coordinates[0]) +
-                    abs(destination.position[1] - goal_coordinates[1])
-                )
-            destination.f = destination.g + destination.h
-            frontier.push(destination)
-
-    return path
 
 
 def expand(grid, factor):
@@ -189,6 +74,27 @@ def find_path(board):
     return score, path
 
 
+def resolve_path(parent_by_node, leaf):
+    """
+    TODO EXPLAIN
+
+    :param dict[(int,int), (int,int)|None] parent_by_node:
+    :param (int,int) leaf:
+
+    :return:
+    :rtype: list[(int,int)]
+    """
+
+    leaf_to_root = [leaf]
+    current_node = leaf
+    while current_node in parent_by_node:
+        current_node = parent_by_node[current_node]
+        leaf_to_root.append(current_node)
+
+    root_to_leaf = leaf_to_root[::-1]  # reverse the list
+    return root_to_leaf
+
+
 def dijkstras_search(grid, start, goal):
     """
     TODO EXPLAIN
@@ -204,16 +110,16 @@ def dijkstras_search(grid, start, goal):
     finalized_coordinates = set()   # type: typing.Set[typing.Tuple[int,int]]
     parent_by_node = {}             # type: typing.Dict[typing.Tuple[int,int], typing.Tuple[int,int]]
 
-    priority_queue = []  # type: typing.List[typing.Tuple[int,typing.Tuple[int,int]]]
+    priority_queue = PriorityQueue()
     travel_cost_by_node = defaultdict(lambda: sys.maxsize)  # type: typing.Dict[typing.Tuple[int,int], int]
 
     # Introduce the initial node, then begin the search loop
     travel_cost_by_node[start] = 0
-    heapq.heappush(priority_queue, (0, start))
+    priority_queue.push(start, 0)
     while priority_queue:
         # Pop the next node from the queue; as it is that which is most-optimal, it is now finalized; in fact, if it's
         # the goal node, then we've finalized an optimal route and can stop
-        _, finalized_node = heapq.heappop(priority_queue)
+        finalized_node = priority_queue.pop()
         finalized_coordinates.add(finalized_node)
         if finalized_node == goal:
             break
@@ -238,15 +144,10 @@ def dijkstras_search(grid, start, goal):
                 travel_cost_by_node[neighbor] = prospective_travel_cost
 
                 # Add the neighbor to the priority queue
-                heapq.heappush(priority_queue, (prospective_travel_cost, neighbor))
+                priority_queue.push(neighbor, prospective_travel_cost)
 
-    path = [goal]
-    node = goal
-    while node in parent_by_node:
-        node = parent_by_node[node]
-        path.append(node)
-    actual_path = path[::-1]
-    return actual_path
+    path = resolve_path(parent_by_node, goal)
+    return path
 
 
 def main():
