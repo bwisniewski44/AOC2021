@@ -2,6 +2,7 @@
 TODO EXPLAIN
 """
 import heapq
+import itertools
 from collections.abc import Hashable
 import typing
 
@@ -372,13 +373,14 @@ class Grid(object):
 class PriorityQueue:
     def __init__(self):
         self._values = []
+        self._counter = itertools.count()
 
     def pop(self):
-        result = heapq.heappop(self._values)
-        return result
+        _, _, item = heapq.heappop(self._values)
+        return item
 
-    def push(self, item):
-        heapq.heappush(self._values, item)
+    def push(self, item, priority):
+        heapq.heappush(self._values, (priority, -next(self._counter), item))
 
     def __len__(self):
         return len(self._values)
