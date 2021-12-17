@@ -4,6 +4,8 @@ TODO EXPLAIN
 This script is part of a solution set devised to complete the 'Advent of Code' puzzles, year 2021:
 https://adventofcode.com/2021
 """
+
+import time
 import sys
 import typing
 from collections import defaultdict
@@ -61,13 +63,17 @@ def find_path(board):
     :rtype: (int, list[(int,int)])
     """
 
+    # Define the start and goal positions (top-left to bottom-right)
     begin = (0, 0)
     goal = (board.height-1, board.width-1)
 
-    import time
+    # Perform the search; note down the start-time before doing so: let's measure how long it takes
     begin_time = time.time()
     path = dijkstras_search(board, begin, goal)
     total_time = time.time() - begin_time
+
+    # A path was returned; the score is the sum of its parts (less the begin node... the puzzle dictates that its cost
+    # is not incurred)
     score = sum(board[coordinate] for coordinate in path) - board[begin]
     print(f"{score} in {total_time:2.2f}s. for path across {board.height}x{board.width} grid: {path}")
 
