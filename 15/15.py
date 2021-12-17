@@ -4,9 +4,10 @@ TODO EXPLAIN
 This script is part of a solution set devised to complete the 'Advent of Code' puzzles, year 2021:
 https://adventofcode.com/2021
 """
-
+import heapq
+import sys
 import typing
-from collections import deque
+from collections import deque, defaultdict
 from structures import Grid, PriorityQueue
 
 
@@ -180,12 +181,72 @@ def find_path(board):
 
     import time
     begin_time = time.time()
-    path = search(board, begin, goal)
+    path = dijkstras_search(board, begin, goal)
     total_time = time.time() - begin_time
     score = sum(board[coordinate] for coordinate in path) - board[begin]
     print(f"{score} in {total_time:2.2f}s. for path across {board.height}x{board.width} grid: {path}")
 
     return score, path
+
+
+def dijkstras_search(grid, start, goal):
+    """
+    TODO EXPLAIN
+
+    :param Grid grid:
+    :param (int,int) start:
+    :param (int,int) goal:
+
+    :return:
+    :rtype: list[(int,int)]
+    """
+
+    finalized_coordinates = set()   # type: typing.Set[typing.Tuple[int,int]]
+    parent_by_node = {}             # type: typing.Dict[typing.Tuple[int,int], typing.Tuple[int,int]]
+
+    priority_queue = []  # type: typing.List[typing.Tuple[int,typing.Tuple[int,int]]]
+    travel_cost_by_node = defaultdict(lambda: sys.maxsize)  # type: typing.Dict[typing.Tuple[int,int], int]
+
+    # Introduce the initial node, then begin the search loop
+    travel_cost_by_node[start] = 0
+    heapq.heappush(priority_queue, (0, start))
+    while priority_queue:
+        # Pop the next node from the queue; as it is that which is most-optimal, it is now finalized; in fact, if it's
+        # the goal node, then we've finalized an optimal route and can stop
+        _, finalized_node = heapq.heappop(priority_queue)
+        finalized_coordinates.add(finalized_node)
+        if finalized_node == goal:
+            break
+
+        # Perhaps this optimal route to the current node offers a newly-optimal route to its neighbors; for each
+        # neighbor...
+        for direction in (Grid.DOWN, Grid.RIGHT, Grid.UP, Grid.LEFT):
+            # ... resolve the neighbor node; skip if it has already been finalized
+            try:
+                neighbor = grid.move(finalized_node, direction)
+            except IndexError:
+                continue
+            if neighbor in finalized_coordinates:
+                continue
+
+            # Determine the cost involved with travelling to the neighbor from this node; if that cost is less than its
+            # current cost...
+            prospective_travel_cost = travel_cost_by_node[finalized_node] + grid[neighbor]
+            if prospective_travel_cost < travel_cost_by_node[neighbor]:
+                # ... register the newly-optimal cost
+                parent_by_node[neighbor] = finalized_node
+                travel_cost_by_node[neighbor] = prospective_travel_cost
+
+                # Add the neighbor to the priority queue
+                heapq.heappush(priority_queue, (prospective_travel_cost, neighbor))
+
+    path = [goal]
+    node = goal
+    while node in parent_by_node:
+        node = parent_by_node[node]
+        path.append(node)
+    actual_path = path[::-1]
+    return actual_path
 
 
 def main():
