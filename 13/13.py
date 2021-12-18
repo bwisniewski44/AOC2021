@@ -5,7 +5,15 @@ This script is part of a solution set devised to complete the 'Advent of Code' p
 https://adventofcode.com/2021
 """
 
+import typing
+from collections import deque
 from structures import Grid
+
+
+FOLD_DIRECTION_BY_DIMENSION_INDICATOR = {
+    "x": Grid.UP,
+    "y": Grid.LEFT
+}
 
 
 def enforce_fold_size(grid, direction, axis_index):
@@ -13,7 +21,7 @@ def enforce_fold_size(grid, direction, axis_index):
     Ensures that the grid has sufficient column/row space to allow a fold left/up (respectively) at the given fold
     index.
 
-    :param Grid grid:
+    :param Grid[int] grid:
     :param int direction:
     :param int axis_index:
 
@@ -58,7 +66,7 @@ def fold(grid, direction, axis_index):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
     :param int direction:
     :param int axis_index:
 
@@ -90,18 +98,88 @@ def fold(grid, direction, axis_index):
                     grid[receiving_index] = value
 
 
+def get_board(marked_positions):
+    """
+    TODO EXPLAIN
+
+    :param set[(int,int)] marked_positions:
+
+    :return:
+    :rtype: Grid[int]
+    """
+
+    board_height = max(coordinates[0] for coordinates in marked_positions) + 1
+    board_width = max(coordinates[1] for coordinates in marked_positions) + 1
+    total_elements = board_height * board_width
+
+    initial_sequence = [0 for _ in range(total_elements)]
+    board = Grid.fromlist(initial_sequence, board_height)  # type: Grid[int]
+    for coordinates in marked_positions:
+        board[coordinates] = 1
+
+    return board
+
+
 def load_input(path="input.txt"):
     """
     TODO EXPLAIN
 
     :param str path: path to the file to read as input to this script
 
-    :return:
-    :rtype: Grid
+    :return: 2-tuple giving...
+      1. (Grid[int]) a grid of dots TODO: better explanation
+      2. list[(int,int)]
+    :rtype: (Grid[int], list[(int,int)])
     """
     with open(path) as infile:
-        lines = [str.strip(line) for line in infile.readlines()]
-    pass  # TODO: don't pass
+        lines = deque(str.strip(line) for line in infile.readlines())
+
+    # The lines start with coordinates before a blank line separating the coordinates from the fold-sequence
+    marked_positions = set()     # type: typing.Set[typing.Tuple[int,int]]
+    fold_instructions = []  # type: typing.List[typing.Tuple[int,int]]
+    parsing_coordinates = True
+    while parsing_coordinates:
+        coordinates_expression = lines.popleft()
+        if len(coordinates_expression) == 0:
+            parsing_coordinates = False
+        else:
+            x, y = (int(str.strip(digits)) for digits in coordinates_expression.split(","))  # type: int, int
+            marked_positions.add(
+                (x, y)
+            )
+    board = get_board(marked_positions)
+
+    # Coordinates-parsing concluded; that must mean that the separating blank line has been popped; what remains are
+    # fold instructions
+    while lines:
+        instruction = lines.popleft()
+
+        # Use the '=' to take the immediately-preceding char (the dimension indicator, 'x'/'y'), and all the following
+        # chars (a position, ie: x=500)
+        equals_position = instruction.find("=")
+        dimension_indicator = instruction[equals_position-1]
+        fold_direction = FOLD_DIRECTION_BY_DIMENSION_INDICATOR[dimension_indicator]
+        position = int(instruction[equals_position+1:])
+
+        fold_instructions.append(
+            (fold_direction, position)
+        )
+
+    return board, fold_instructions
+
+
+def execute_fold_sequence(board, instructions):
+    """
+    TODO EXPLAIN
+
+    :param Grid[int] board:
+    :param (int,int) instructions:
+
+    :return: None
+    """
+
+    for direction, position in instructions:
+        fold(board, direction, position)
 
 
 def main():
@@ -110,7 +188,9 @@ def main():
 
     :return: None
     """
-    pass
+    board, fold_instructions = load_input()
+
+    execute_fold_sequence(board, fold_instructions)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ https://adventofcode.com/2021
 
 import typing
 from collections import deque
-from structures import Grid
+from structures import Grid, load_int_block
 
 _DISCHARGE_THRESHOLD = 10
 
@@ -16,7 +16,7 @@ def increment(grid, coordinate):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
     :param (int,int) coordinate:
 
     :return:
@@ -33,7 +33,7 @@ def do_round(grid):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
 
     :return: number of coordinates at which discharge occurred
     :rtype: int
@@ -72,7 +72,7 @@ def main():
 
     :return: None
     """
-    grid = Grid.load("input.txt")
+    grid = load_int_block("input.txt")
 
     # We've done enough rounds for both parts when each part has enough info...
     # Part 1: we need 100 rounds

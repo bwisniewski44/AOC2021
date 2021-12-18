@@ -6,7 +6,7 @@ https://adventofcode.com/2021
 """
 
 import typing
-from structures import Grid
+from structures import Grid, load_int_block
 
 
 def assess_risk(height_ranking):
@@ -26,7 +26,7 @@ def add_adjacent_value(values, grid, coordinate, direction):
     TODO EXPLAIN
 
     :param set[int] values:
-    :param Grid grid:
+    :param Grid[int] grid:
     :param (int,int) coordinate:
     :param int direction:
 
@@ -38,7 +38,7 @@ def add_adjacent_value(values, grid, coordinate, direction):
     except IndexError:
         pass
     else:
-        value = grid.at(adjacency_row, adjacency_col)
+        value = grid[adjacency_row, adjacency_col]
         values.add(value)
 
 
@@ -46,7 +46,7 @@ def find_minima(grid):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
 
     :return:
     :rtype: set[(int,int)]
@@ -56,7 +56,7 @@ def find_minima(grid):
 
     for i in range(grid.height):
         for j in range(grid.width):
-            height_ranking = grid.at(i, j)
+            height_ranking = grid[i, j]
 
             # Resolve all the different height-rankings of adjacent spaces
             adjacent_values = set()  # type: typing.Set[int]
@@ -78,7 +78,7 @@ def expand_basin(coordinate, members, grid):
 
     :param (int,int) coordinate:
     :param set[(int,int)] members:
-    :param Grid grid:
+    :param Grid[int] grid:
 
     :return: None
     """
@@ -100,7 +100,7 @@ def get_basin_number_by_coordinate(grid):
     """
     TODO EXPLAIN
 
-    :param grid:
+    :param Grid[int] grid:
 
     :return:
     :rtype: dict[(int,int), int]
@@ -132,7 +132,7 @@ def get_basin_geography(grid):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
 
     :return:
     :rtype: list[set[(int,int)]]
@@ -164,7 +164,7 @@ def main():
 
     :return: None
     """
-    grid = Grid.load("input.txt")
+    grid = load_int_block("input.txt")
     minima = find_minima(grid)
     print(sum(assess_risk(grid[coordinate]) for coordinate in minima))
 

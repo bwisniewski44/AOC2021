@@ -9,27 +9,26 @@ import time
 import sys
 import typing
 from collections import defaultdict
-from structures import Grid, PriorityQueue
+from structures import Grid, PriorityQueue, load_int_block
 
 
 def expand(grid, factor):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
     :param int factor:
 
     :return:
-    :rtype: Grid
+    :rtype: Grid[int]
     """
 
     # Resolve the dimensions of the expanded grid to be returned
     new_height = grid.height * factor
     new_width = grid.width * factor
-    new_quantity = new_height * new_width
 
     # Initialize a new grid of the expanded dimensions
-    new_grid = Grid([0 for _ in range(new_quantity)], new_height)
+    new_grid = Grid(height=new_height, width=new_width)
 
     # For each cell of the expanded, initialized grid...
     for i in range(new_grid.height):
@@ -57,7 +56,7 @@ def find_path(board):
     """
     TODO EXPLAIN
 
-    :param Grid board:
+    :param Grid[int] board:
 
     :return:
     :rtype: (int, list[(int,int)])
@@ -105,7 +104,7 @@ def dijkstras_search(grid, start, goal):
     """
     TODO EXPLAIN
 
-    :param Grid grid:
+    :param Grid[int] grid:
     :param (int,int) start:
     :param (int,int) goal:
 
@@ -162,7 +161,7 @@ def main():
 
     :return: None
     """
-    board = Grid.load("input.txt")
+    board = load_int_block("input.txt")
 
     # Part 1
     score, path = find_path(board)
