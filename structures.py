@@ -274,7 +274,7 @@ class Grid(Generic[_T]):
         if dimension == Grid.HORIZONTAL:
             if index is None:
                 index = self.height
-            elif not (0 <= index < self.height):
+            elif not (0 <= index <= self.height):
                 self._raise_oob((index, 0))
 
             row = [fill for _ in range(self.width)]
@@ -284,7 +284,7 @@ class Grid(Generic[_T]):
         elif dimension == Grid.VERTICAL:
             if index is None:
                 index = self.width
-            elif not (0 <= index < self.width):
+            elif not (0 <= index <= self.width):
                 self._raise_oob((0, index))
 
             for i, row in enumerate(self._rows):  # type: int, typing.List
@@ -293,6 +293,41 @@ class Grid(Generic[_T]):
         # Otherwise, vector was specified as being neither a row nor a column; can't handle this :(
         else:
             raise ValueError(f"Unexpected dimension code {repr(dimension)}")
+
+    def pop(self, dimension, index=None):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param int index:
+
+        :return:
+        :rtype: list[_T]
+        """
+
+        if dimension == Grid.HORIZONTAL:
+            if index is None:
+                index = self.height - 1
+            elif not (0 <= index < self.height):
+                self._raise_oob((index, 0))
+            result = self._rows.pop(index)
+
+        elif dimension == Grid.VERTICAL:
+            if index is None:
+                index = self.width - 1
+            elif not (0 <= index < self.width):
+                self._raise_oob((0, index))
+
+            result = []
+            for row in self._rows:  # type: list
+                result.append(
+                    row.pop(index)
+                )
+
+        else:
+            raise ValueError(f"Unexpected dimension code {repr(dimension)}")
+
+        return result
 
     def __getitem__(self, pos):
         """
