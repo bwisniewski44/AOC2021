@@ -147,6 +147,9 @@ class Grid(Generic[_T]):
         """
         self._rows, self._width = self.resize(height, width, fill=fill)
 
+    def __repr__(self):
+        return f"{self.height}x{self.width}"
+
     @property
     def height(self):
         return len(self._rows)
@@ -173,6 +176,17 @@ class Grid(Generic[_T]):
             return self.height
         else:
             raise ValueError(f"Unexpected dimension code {dimension}")
+
+    def count(self, dimension):
+        """
+        Gives the number of vectors having elements in the given dimension.
+
+        :param int dimension:
+
+        :return:
+        :rtype: int
+        """
+        return self.dimlen(not dimension)
 
     def _raise_oob(self, pos):
         """
