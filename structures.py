@@ -339,7 +339,12 @@ class Grid(Generic[_T]):
         :rtype: _T
         """
         row, col = pos
-        return self._rows[row][col]
+        try:
+            result = self._rows[row][col]
+        except IndexError:
+            self._raise_oob(pos)
+        else:
+            return result
 
     def __setitem__(self, key, value):
         """
@@ -351,7 +356,10 @@ class Grid(Generic[_T]):
         :return: None
         """
         row, col = key
-        self._rows[row][col] = value
+        try:
+            self._rows[row][col] = value
+        except IndexError:
+            self._raise_oob(key)
 
 
 class PriorityQueue:
