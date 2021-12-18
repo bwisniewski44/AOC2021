@@ -5,6 +5,7 @@ import heapq
 import itertools
 from collections.abc import Hashable, Sequence
 import typing
+from typing import Generic, TypeVar
 
 
 class KeySet(dict):
@@ -55,7 +56,10 @@ class KeySet(dict):
         return tuple(keys)
 
 
-class Grid(object):
+_T = TypeVar("_T")
+
+
+class Grid(Generic[_T]):
     """
     TODO EXPLAIN
     """
@@ -203,6 +207,7 @@ class Grid(object):
         :param (int,int) pos:
 
         :return:
+        :rtype: _T
         """
         row, col = pos
         return self._rows[row][col]
@@ -212,7 +217,7 @@ class Grid(object):
         TODO EXPLAIN
 
         :param (int,int) key:
-        :param int value:
+        :param _T value:
 
         :return: None
         """
