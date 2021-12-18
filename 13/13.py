@@ -62,32 +62,6 @@ def enforce_fold_size(grid, direction, axis_index):
     return vectors_to_add
 
 
-def get_coordinates(dimension, constant, count):
-    """
-    TODO EXPLAIN
-
-    :param int dimension:
-    :param int constant:
-    :param int count:
-
-    :return:
-    :rtype: list[(int,int)]
-    """
-
-    if dimension == Grid.HORIZONTAL:
-        coordinates = [
-            (row, constant) for row in range(count)
-        ]
-    elif dimension == Grid.VERTICAL:
-        coordinates = [
-            (constant, col) for col in range(count)
-        ]
-    else:
-        raise ValueError(f"Unexpected dimension code {repr(dimension)}")
-
-    return coordinates
-
-
 def fold(grid, direction, axis_index):
     """
     TODO EXPLAIN
@@ -108,17 +82,17 @@ def fold(grid, direction, axis_index):
     axis_index += vectors_added
 
     # While folding...
-    while axis_index < grid.dimlen(dimension):
+    while axis_index < grid.count(dimension):
         # ... pop the next-furthest vector from the fold
         vector = grid.pop(dimension)
-        distance_from_axis = grid.dimlen(dimension) - axis_index
+        distance_from_axis = grid.count(dimension) - axis_index
 
         # If that vector wasn't the fold itself...
         if distance_from_axis > 0:
             # ... determine the index of the vector into which to OR the values
             receiving_vector_index = axis_index - distance_from_axis
-            receiving_coordinates = get_coordinates(dimension, receiving_vector_index, len(vector))
-            for i, coordinates in enumerate(receiving_coordinates):
+            coordinates = grid.get_coordinates(dimension, receiving_vector_index)
+            for i, coordinates in enumerate(coordinates):
                 value = vector[i]
                 if value == 0:
                     continue
@@ -203,11 +177,39 @@ def execute_fold_sequence(board, instructions):
     :param Grid[int] board:
     :param list[(int,int)] instructions:
 
-    :return: None
+    :return: int
+    :rtype: int
     """
 
     for direction, position in instructions:
         fold(board, direction, position)
+
+    counter = 0
+    for i in range(board.height):
+        for j in range(board.width):
+            if board[i, j]:
+                counter += 1
+
+    return counter
+
+
+def output_board(board, path, separator="", positive="#", negative="."):
+    """
+    TODO EXPLAIN
+
+    :param Grid[int] board:
+    :param str path:
+    :param str separator:
+    :param str positive:
+    :param str negative:
+
+    :return: None
+    """
+
+    with open(path, "w") as outfile:
+        for row in range(board.height):
+            line = separator.join(positive if board[row, col] else negative for col in range(board.width))
+            outfile.write(line + '\n')
 
 
 def main():
@@ -217,8 +219,15 @@ def main():
     :return: None
     """
     board, fold_instructions = load_input()
+    print(f"Loaded {board.height}x{board.width} grid")
 
-    execute_fold_sequence(board, fold_instructions)
+    # Part 1: Perform just the first of the fold instructions, then count the tiles with dots
+    count = execute_fold_sequence(board, fold_instructions[:1])
+    print(count)
+
+    # Part 2: Perform the remaining fold instructions; print the board
+    execute_fold_sequence(board, fold_instructions[1:])
+    output_board(board, "output.txt")
 
 
 if __name__ == "__main__":
