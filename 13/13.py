@@ -16,13 +16,13 @@ FOLD_DIRECTION_BY_DIMENSION_INDICATOR = {
 }
 
 
-def enforce_fold_size(grid, direction, axis_index):
+def enforce_fold_size(grid, dimension, axis_index):
     """
     Ensures that the grid has sufficient column/row space to allow a fold left/up (respectively) at the given fold
     index.
 
     :param Grid[int] grid:
-    :param int direction:
+    :param int dimension:
     :param int axis_index:
 
     :return: number of vectors added
@@ -30,14 +30,7 @@ def enforce_fold_size(grid, direction, axis_index):
     """
 
     # Ensure that the direction is valid
-    if direction == Grid.UP:
-        vector_dimension = Grid.HORIZONTAL
-        total_vector_count = grid.height
-    elif direction == Grid.LEFT:
-        vector_dimension = Grid.VERTICAL
-        total_vector_count = grid.width
-    else:
-        raise ValueError(f"Unexpected fold-direction code {direction}")
+    total_vector_count = grid.count(dimension)
 
     # Ensure that there are at least as many vectors preceding the fold as there are following the fold; if there aren't
     # already, we'll have to insert new, blank ones
@@ -54,9 +47,11 @@ def enforce_fold_size(grid, direction, axis_index):
 
     i = 0
     while i < vectors_to_add:
-        grid.insert(vector_dimension, index=0, fill=0)
+        grid.insert(dimension, index=0, fill=0)
         i += 1
 
+    if vectors_to_add > 0:
+        print("AAAH")
     return vectors_to_add
 
 
@@ -76,7 +71,7 @@ def fold(grid, direction, axis_index):
         Grid.LEFT: Grid.VERTICAL
     }
     dimension = dimension_by_direction[direction]
-    vectors_added = enforce_fold_size(grid, direction, axis_index)
+    vectors_added = enforce_fold_size(grid, dimension, axis_index)
     axis_index += vectors_added
 
     # While folding...
