@@ -61,18 +61,18 @@ _T = TypeVar("_T")
 
 class Grid(Generic[_T]):
     """
-    TODO EXPLAIN
+    Wrapper around nested lists of items
     """
 
     @staticmethod
     def fromlist(items, rows):
         """
-        TODO EXPLAIN
+        Returns the grid formed by breaking down a single sequence of items into like-length rows.
 
-        :param list items:
-        :param int rows:
+        :param list items: sequence of items; length must be a multiple of the ``rows`` argument
+        :param int rows: length of each row to form
 
-        :return:
+        :return: two-dimensional array of items
         :rtype: Grid
         """
 
@@ -91,11 +91,13 @@ class Grid(Generic[_T]):
     @staticmethod
     def fromlists(nested_lists):
         """
-        TODO EXPLAIN
+        Builds a ``Grid`` instance out of the 2-dimensional array of items.
 
-        :param list[Sequence] nested_lists:
+        :param list[Sequence] nested_lists: inner-nested values; each inner-nested array must be of like-length
 
-        :return:
+        :raises IndexError: on failure to observe the like-length constraint
+
+        :return: ``Grid`` instance represented by the two-dimensional array
         :rtype: Grid
         """
 
@@ -109,13 +111,19 @@ class Grid(Generic[_T]):
 
             result = Grid(height=height, width=width)
             for i, row in enumerate(nested_lists):
+                if len(row) != width:
+                    raise \
+                        IndexError(
+                            f"{height}x{width} grid expects rows of length {width}, but encountered {i}th row of "
+                            f"length {len(row)}"
+                        )
                 for j in range(width):
                     result[i, j] = row[j]
 
         return result
 
+    # The following are class constants which are used when navigating relative to some origin position
     DIRECTIONS = KeySet()   # type: KeySet[int,typing.Tuple[int,int]]
-
     UP_LEFT, UP, UP_RIGHT, LEFT, RIGHT, DOWN_LEFT, DOWN, DOWN_RIGHT = \
         DIRECTIONS.enumerate(
             (
@@ -127,15 +135,15 @@ class Grid(Generic[_T]):
             )
         )   # type: int, int, int, int, int, int, int, int
 
-
+    # Constant codes identifying the two dimensions of a grid
     DIMENSIONS = KeySet()
     HORIZONTAL, VERTICAL = DIMENSIONS.enumerate(2)
 
     def __init__(self, height=0, width=0, fill=None):
         """
-        :param int height: TODO EXPLAIN
-        :param int width:
-        :param object fill:
+        :param int height: number of rows to populate
+        :param int width: number of columns to populate
+        :param object fill: value to populate into each cell
         """
         self._rows, self._width = self.resize(height, width, fill=fill)
 
@@ -261,11 +269,12 @@ class PriorityQueue:
 
 def load_int_block(path):
     """
-    TODO EXPLAIN
+    Loads the grid of integers encoded by the content of a file. The file content shall be a sequence of like-length
+    lines containing all-digits ahead of their new-line.
 
-    :param str path:
+    :param str path: path to file containing digits
 
-    :return:
+    :return: grid of integers
     :rtype: Grid[int]
     """
 
