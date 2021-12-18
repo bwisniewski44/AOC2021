@@ -137,12 +137,7 @@ class Grid(Generic[_T]):
         :param int width:
         :param object fill:
         """
-        self._rows = []  # type: typing.List[typing.List]
-        self._width = width
-
-        for _ in range(height):
-            row = [fill for _ in range(width)]
-            self._rows.append(row)
+        self._rows, self._width = self.resize(height, width, fill=fill)
 
     @property
     def height(self):
@@ -155,50 +150,73 @@ class Grid(Generic[_T]):
     def __len__(self):
         return self.height * self.width
 
+    def dimlen(self, dimension):
+        """
+        Gives the number of elements for each among the vectors inhabiting the given dimension.
+
+        :param int dimension: code by which to identify the horizontal or the vertical vectors
+
+        :return:
+        :rtype: int
+        """
+        if dimension == Grid.HORIZONTAL:
+            return self.width
+        elif dimension == Grid.VERTICAL:
+            return self.height
+        else:
+            raise ValueError(f"Unexpected dimension code {dimension}")
+
     def in_bounds(self, i, j):
         return (0 <= i < self.height) and (0 <= j < self.width)
 
-    def move(self, coordinate, direction):
+    def move(self, coordinate, direction, distance=1):
         """
-        TODO EXPLAIN
+        Gives the in-bounds grid coordinates which would be the destination for moving from the specified space.
 
-        :param (int,int) coordinate:
-        :param int direction:
+        :param (int,int) coordinate: position from which to measure movement
+        :param int direction: code specifying the direction in which to move
+        :param distance: number of times to perform the move
 
         :raises IndexError: on attempt to produce out-of-bounds coordinates
 
-        :return:
+        :return: in-bounds destination coordinates
         :rtype: (int,int)
         """
         if direction not in Grid.DIRECTIONS:
             raise ValueError(f"Unrecognized direction specifier {repr(direction)}")
         modification_vector = Grid.DIRECTIONS[direction]
 
-        result_row, result_col = (coordinate[i] + adjustment for i, adjustment in enumerate(modification_vector))
+        result_row, result_col = (
+            coordinate[i] + (adjustment*distance) for i, adjustment in enumerate(modification_vector)
+        )
 
         if self.in_bounds(result_row, result_col):
             return result_row, result_col
         else:
             raise IndexError(f"({result_row},{result_col}) out of bounds for {self.height}x{self.width} grid")
 
-    def size(self, height, width, fill=None):
+    def resize(self, height, width, fill=None):
         """
-        TODO EXPLAIN
+        Clears and resizes this grid.
 
-        :param int height:
-        :param int width:
-        :param object fill:
+        :param int height: new size of columns
+        :param int width: new size of rows
+        :param _T fill: object to occupy each of this grid's cells
 
-        :return: None
+        :return: 2-tuple giving...
+          1. nested lists of elements
+        :rtype: (list[list[_T]], int)
         """
 
         if any(dimension < 0 for dimension in [height, width]):
             raise ValueError(f"Illegal negative grid dimensions {height}x{width}")
 
-        self._rows.clear()
         self._rows = [
             [fill for _ in range(width)] for _ in range(height)
         ]
+        self._width = width
+
+        return self._rows, self._width
 
     def __getitem__(self, pos):
         """
