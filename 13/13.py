@@ -33,11 +33,9 @@ def enforce_fold_size(grid, direction, axis_index):
     if direction == Grid.UP:
         vector_dimension = Grid.HORIZONTAL
         total_vector_count = grid.height
-        vector_size = grid.width
     elif direction == Grid.LEFT:
         vector_dimension = Grid.VERTICAL
         total_vector_count = grid.width
-        vector_size = grid.height
     else:
         raise ValueError(f"Unexpected fold-direction code {direction}")
 
