@@ -191,7 +191,7 @@ class Grid(Generic[_T]):
         if self.in_bounds(*pos):
             raise ValueError(f"Cannot raise OOB error for in-bounds coordinates {pos}")
         else:
-            raise IndexError(f"Illegal coordinates for {self.height}x{self.width} grid: {pos}")
+            raise IndexError(f"Illegal coordinates {pos} for {self.height}x{self.width} grid")
 
     def in_bounds(self, i, j):
         return (0 <= i < self.height) and (0 <= j < self.width)
@@ -332,6 +332,38 @@ class Grid(Generic[_T]):
             raise ValueError(f"Unexpected dimension code {repr(dimension)}")
 
         return result
+
+    def get_coordinates(self, dimension, index):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param int index:
+
+        :return:
+        :rtype: list[(int,int)]
+        """
+
+        if dimension == Grid.HORIZONTAL:
+            # Ensure that the selected row is legal
+            if not (0 <= index < self.height):
+                self._raise_oob((index, 0))
+
+            # Iterate over the row's various column entries
+            coordinates = [(index, col) for col in range(self.width)]
+
+        elif dimension == Grid.VERTICAL:
+            # Ensure that the selected column is legal
+            if not (0 <= index < self.width):
+                self._raise_oob((0, index))
+
+            # Iterate over the column's various row entries
+            coordinates = [(row, index) for row in range(self.height)]
+
+        else:
+            raise ValueError(f"Unexpected dimension code {repr(dimension)}")
+
+        return coordinates
 
     def __getitem__(self, pos):
         """
