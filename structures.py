@@ -239,3 +239,23 @@ class PriorityQueue:
 
     def __len__(self):
         return len(self._values)
+
+
+def load_int_block(path):
+    """
+    TODO EXPLAIN
+
+    :param str path:
+
+    :return:
+    :rtype: Grid[int]
+    """
+
+    with open(path) as infile:
+        lines = [str.strip(line) for line in infile.readlines()]
+
+    rows = [
+        [int(digit) for digit in line] for line in lines
+    ]
+    result = Grid.fromlists(rows)
+    return result
