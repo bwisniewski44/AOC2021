@@ -174,6 +174,25 @@ class Grid(Generic[_T]):
         else:
             raise ValueError(f"Unexpected dimension code {dimension}")
 
+    def _raise_oob(self, pos):
+        """
+        Raises an out-of-bounds ``IndexError`` for a set of coordinates violating the bounds of this ``Grid``.
+
+        :param (int,int) pos: coordinates violating the bounds of this grid; a ``ValueError`` is raised if these
+          coordinates are actually in-bounds
+
+        :raises IndexError: on out-of-bounds coordinates
+        :raises ValueError: on in-bounds coordinates
+
+        :return: N/A - this function always results in an ``Exception`` being raised
+        :rtype: NoReturn
+        """
+
+        if self.in_bounds(*pos):
+            raise ValueError(f"Cannot raise OOB error for in-bounds coordinates {pos}")
+        else:
+            raise IndexError(f"Illegal coordinates for {self.height}x{self.width} grid: {pos}")
+
     def in_bounds(self, i, j):
         return (0 <= i < self.height) and (0 <= j < self.width)
 
@@ -225,6 +244,55 @@ class Grid(Generic[_T]):
         self._width = width
 
         return self._rows, self._width
+
+    def insert(self, dimension, values=None, index=None, fill=None):
+        """
+        TODO EXPLAIN
+
+        :param int dimension:
+        :param list[_T] values:
+        :param int index:
+        :param _T fill: (ignored if a values-vector is given for insertion)
+
+        :raises IndexError: on out-of-bounds index
+
+        :return: None
+        """
+
+        # Ensure that the values vector is defined and of appropriate length
+        values_vector_length = self.width if dimension == Grid.HORIZONTAL else self.height
+        if values is None:
+            values = [fill for _ in range(values_vector_length)]
+        elif len(values) != values_vector_length:
+            raise \
+                IndexError(
+                    f"Expecting vector of length {values_vector_length} for entry into {self.height}x{self.width} "
+                    f"grid, but encountered {len(values)}-element values vector"
+                )
+
+        # If vector is specified as being a row...
+        if dimension == Grid.HORIZONTAL:
+            if index is None:
+                index = self.height
+            elif not (0 <= index < self.height):
+                self._raise_oob((index, 0))
+
+            row = [fill for _ in range(self.width)]
+            self._rows.insert(index, row)
+
+        # If vector is specified as being a column...
+        elif dimension == Grid.VERTICAL:
+            if index is None:
+                index = self.width
+            elif not (0 <= index < self.width):
+                self._raise_oob((0, index))
+
+            for i, row in enumerate(self._rows):  # type: int, typing.List
+                row.insert(index, values[i])
+
+        # Otherwise, vector was specified as being neither a row nor a column; can't handle this :(
+        else:
+            raise ValueError(f"Unexpected dimension code {repr(dimension)}")
 
     def __getitem__(self, pos):
         """
