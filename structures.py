@@ -3,7 +3,7 @@ TODO EXPLAIN
 """
 import heapq
 import itertools
-from collections.abc import Hashable
+from collections.abc import Hashable, Sequence
 import typing
 
 
@@ -61,46 +61,65 @@ class Grid(object):
     """
 
     @staticmethod
-    def load(path):
+    def fromlist(items, rows):
         """
         TODO EXPLAIN
 
-        :param str path:
+        :param list items:
+        :param int rows:
 
         :return:
         :rtype: Grid
         """
 
-        with open(path) as infile:
-            lines = [str.strip(line) for line in infile.readlines()]
+        width = len(items) // rows
+        if width * rows != len(items):
+            raise ValueError(f"Cannot evenly divide {len(items)} items into {rows} rows")
 
-        height = len(lines)
-        values = []  # type: typing.List[int]
-        for digits in lines:
-            values.extend(int(digit) for digit in digits)
+        result = Grid(height=rows, width=width)
+        for i, item in enumerate(items):
+            row = i // width
+            col = i % width
+            result[row, col] = item
 
-        return Grid(values, height)
+        return result
+
+    @staticmethod
+    def fromlists(nested_lists):
+        """
+        TODO EXPLAIN
+
+        :param list[Sequence] nested_lists:
+
+        :return:
+        :rtype: Grid
+        """
+
+        # Validate that each list has the same number of elements
+        if len(nested_lists) == 0:
+            result = Grid()
+        else:
+            leading_row = nested_lists[0]
+            height = len(nested_lists)
+            width = len(leading_row)
+
+            result = Grid(height=height, width=width)
+            for i, row in enumerate(nested_lists):
+                for j in range(width):
+                    result[i, j] = row[j]
+
+        return result
 
     DIRECTIONS = KeySet()   # type: KeySet[int,typing.Tuple[int,int]]
 
-    UP_LEFT,\
-        UP,\
-        UP_RIGHT,\
-        LEFT,\
-        RIGHT,\
-        DOWN_LEFT,\
-        DOWN,\
-        DOWN_RIGHT = \
+    UP_LEFT, UP, UP_RIGHT, LEFT, RIGHT, DOWN_LEFT, DOWN, DOWN_RIGHT = \
         DIRECTIONS.enumerate(
             (
-                (-1, -1),
-                (-1, 0),
-                (-1, 1),
-                (0, -1),
-                (0, 1),
-                (1, -1),
-                (1, 0),
-                (1, 1),
+                (-1, -1), (-1, 0), (-1, 1),
+
+                (0, -1), (0, 1),
+
+                (1, -1), (1, 0), (1, 1)
             )
         )   # type: int, int, int, int, int, int, int, int
 
@@ -108,52 +127,32 @@ class Grid(object):
     DIMENSIONS = KeySet()
     HORIZONTAL, VERTICAL = DIMENSIONS.enumerate(2)
 
-    def __init__(self, sequence, height):
+    def __init__(self, height=0, width=0, fill=None):
         """
-        :param list[int] sequence: TODO EXPLAIN
-        :param int height:
+        :param int height: TODO EXPLAIN
+        :param int width:
+        :param object fill:
         """
+        self._rows = []  # type: typing.List[typing.List]
+        self._width = width
 
-        self._values = sequence
-        self._height = height
-        self._width = len(sequence) // height
-
-        if self._width * self._height != len(sequence):
-            raise \
-                ValueError(
-                    f"Illegal height {height} for {len(sequence)}-length value sequence; height must be a whole-number "
-                    f"factor of sequence"
-                )
+        for _ in range(height):
+            row = [fill for _ in range(width)]
+            self._rows.append(row)
 
     @property
     def height(self):
-        return self._height
+        return len(self._rows)
 
     @property
     def width(self):
         return self._width
 
+    def __len__(self):
+        return self.height * self.width
+
     def in_bounds(self, i, j):
         return (0 <= i < self.height) and (0 <= j < self.width)
-
-    def at(self, i, j):
-        """
-        TODO EXPLAIN
-
-        :param int i:
-        :param int j:
-
-        :return:
-        :rtype: int
-        """
-
-        if not (0 <= i < self.height):
-            raise ValueError(f"Row index {i} violates legal range [0,{self.height})")
-        if not (0 <= j < self.width):
-            raise ValueError(f"Col index {j} violates legal range [0,{self.width})")
-
-        index = self.width * i + j
-        return self._values[index]
 
     def move(self, coordinate, direction):
         """
@@ -178,196 +177,47 @@ class Grid(object):
         else:
             raise IndexError(f"({result_row},{result_col}) out of bounds for {self.height}x{self.width} grid")
 
-    def __getitem__(self, pos):
+    def size(self, height, width, fill=None):
         """
         TODO EXPLAIN
 
-        :param int|(int,int) pos:
-
-        :return:
-        :rtype: int
-        """
-        if isinstance(pos, int):
-            index = pos
-        else:
-            row, col = pos
-            if not self.in_bounds(row, col):
-                raise IndexError(f"Coordinates ({row},{col}) out-of-range for {self.height}x{self.width} grid")
-            index = self.width * row + col
-
-        return self._values[index]
-
-    def get_vector_positions(self, dimension, index):
-        """
-        TODO EXPLAIN
-
-        :param int dimension:
-        :param int index:
-
-        :return:
-        :rtype: list[int]
-        """
-
-        # Count the number of vectors aligned along the specified dimension
-        if dimension == Grid.HORIZONTAL:
-            current_vector_count = self.height
-            element_count = self.width
-            element_index = index * self.width
-            index_increment = 1
-        elif dimension == Grid.VERTICAL:
-            current_vector_count = self.width
-            element_count = self.height
-            element_index = index
-            index_increment = self.width
-        else:
-            raise ValueError(f"Encountered unexpected dimension code {dimension}")
-
-        # Enforce the index restriction
-        if not (0 <= index < current_vector_count):
-            raise \
-                IndexError(
-                    f"Vector index specification {index} violates legal range [0,{current_vector_count}) for "
-                    f"{self.height}x{self.width} grid"
-                )
-
-        # We survived to this point: must be a valid ask; let's gather the positions of the specified vector
-        element_indices = []    # type: typing.List[int]
-        while len(element_indices) < element_count:
-            element_indices.append(element_index)
-            element_index += index_increment
-
-        return element_indices
-
-    def _get_max_legal_index(self, dimension):
-        """
-        TODO EXPLAIN
-
-        :param int dimension:
-
-        :return:
-        :rtype: int
-        """
-
-        if dimension == Grid.HORIZONTAL:
-            max_legal_index = self.height - 1
-        elif dimension == Grid.VERTICAL:
-            max_legal_index = self.width - 1
-        else:
-            raise ValueError(f"Unexpected dimension code {dimension}")
-
-        return max_legal_index
-
-    def add_vector(self, dimension, values, index=None):
-        """
-        TODO EXPLAIN
-
-        :param int dimension:
-        :param list[int] values:
-        :param int index:
+        :param int height:
+        :param int width:
+        :param object fill:
 
         :return: None
         """
 
-        # Increment the respective dimension before anything; all the other functions invoked in here will work better
-        # if we've tricked them into thinking that we're at the correct width/height already
-        if dimension == Grid.HORIZONTAL:
-            self._height += 1
-        elif dimension == Grid.VERTICAL:
-            self._width += 1
-        if index is None:
-            index = self._get_max_legal_index(dimension)
+        if any(dimension < 0 for dimension in [height, width]):
+            raise ValueError(f"Illegal negative grid dimensions {height}x{width}")
 
-        # Ensure that the number of values supplied precisely matches the number of values expected for a vector in this
-        # dimension; then, add the values to this object
-        insertion_positions = self.get_vector_positions(dimension, index)
-        if len(insertion_positions) != len(values):
-            raise ValueError(f"Expecting {len(insertion_positions)} elements in {len(values)}-length values vector")
-        for i, insertion_index in enumerate(insertion_positions):
-            insertion_value = values[i]
-            self._values.insert(insertion_index, insertion_value)
+        self._rows.clear()
+        self._rows = [
+            [fill for _ in range(width)] for _ in range(height)
+        ]
 
-    def remove_vector(self, dimension, index=None):
+    def __getitem__(self, pos):
         """
         TODO EXPLAIN
 
-        :param int dimension:
-        :param int index:
+        :param (int,int) pos:
 
         :return:
-        :rtype: list[int]
         """
-
-        # Ensure we have a sensible index
-        if index is None:
-            index = self._get_max_legal_index(dimension)
-        positions_to_remove = self.get_vector_positions(dimension, index)
-
-        removed_values = []
-        while positions_to_remove:
-            next_index = positions_to_remove.pop()
-            next_value = self._values.pop(next_index)
-            removed_values.append(next_value)
-
-        original_values = reversed(removed_values)
-        return original_values
-
-    def read_vector(self, dimension, index):
-        """
-        TODO EXPLAIN
-
-        :param int dimension:
-        :param int index:
-
-        :return:
-        :rtype: list[int]
-        """
-
-        if index is None:
-            index = self._get_max_legal_index(dimension)
-        positions_to_read = self.get_vector_positions(dimension, index)
-
-        result = [self._values[i] for i in positions_to_read]
-        return result
-
-    def dimlen(self, dimension):
-        if dimension == Grid.HORIZONTAL:
-            return self.height
-        elif dimension == Grid.VERTICAL:
-            return self.width
-        else:
-            raise ValueError(f"Unexpected dimension code {dimension}")
+        row, col = pos
+        return self._rows[row][col]
 
     def __setitem__(self, key, value):
         """
         TODO EXPLAIN
 
-        :param (int,int)|int key:
+        :param (int,int) key:
         :param int value:
 
         :return: None
         """
-
-        # TODO: normalize keys!
-        if isinstance(key, int):
-            index = key
-        elif isinstance(key, tuple):
-            try:
-                row, col = key
-            except ValueError:
-                raise ValueError(f"Expecting 2-tuple giving (i,j) coordinates; received {len(key)}-tuple")
-            else:
-                if not (0 <= row < self.height):
-                    raise IndexError
-                if not (0 <= col < self.width):
-                    raise IndexError
-                index = row * self.width + col
-        else:
-            raise TypeError(f"Expecting int or 2-tuple specifier; got {type(key)}")
-
-        self._values[index] = value
-
-    def __len__(self):
-        return len(self._values)
+        row, col = key
+        self._rows[row][col] = value
 
 
 class PriorityQueue:
