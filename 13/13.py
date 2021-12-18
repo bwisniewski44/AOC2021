@@ -44,22 +44,48 @@ def enforce_fold_size(grid, direction, axis_index):
     # Ensure that there are at least as many vectors preceding the fold as there are following the fold; if there aren't
     # already, we'll have to insert new, blank ones
     preceding_vectors = axis_index
-    following_vectors = total_vector_count - (preceding_vectors + 1)
+    vectors_to_remove = total_vector_count - preceding_vectors
 
     # The new grid will have exactly as many as the larger of the two groups of vectors; if the preceding vectors shall
     # be those to survive the fold, so if they lack sufficient quantity, insert dummy blank vectors ahead of them (this
     # will shift the fold index!)
-    if preceding_vectors >= following_vectors:
+    if preceding_vectors >= vectors_to_remove:
         vectors_to_add = 0
     else:
-        vectors_to_add = following_vectors - preceding_vectors
+        vectors_to_add = vectors_to_remove - preceding_vectors
 
     i = 0
     while i < vectors_to_add:
-        new_vector = [0 for _ in range(vector_size)]
-        grid.add_vector(vector_dimension, new_vector, index=0)
+        grid.insert(vector_dimension, index=0, fill=0)
+        i += 1
 
     return vectors_to_add
+
+
+def get_coordinates(dimension, constant, count):
+    """
+    TODO EXPLAIN
+
+    :param int dimension:
+    :param int constant:
+    :param int count:
+
+    :return:
+    :rtype: list[(int,int)]
+    """
+
+    if dimension == Grid.HORIZONTAL:
+        coordinates = [
+            (row, constant) for row in range(count)
+        ]
+    elif dimension == Grid.VERTICAL:
+        coordinates = [
+            (constant, col) for col in range(count)
+        ]
+    else:
+        raise ValueError(f"Unexpected dimension code {repr(dimension)}")
+
+    return coordinates
 
 
 def fold(grid, direction, axis_index):
@@ -70,8 +96,7 @@ def fold(grid, direction, axis_index):
     :param int direction:
     :param int axis_index:
 
-    :return:
-    :rtype: Grid
+    :return: None
     """
 
     dimension_by_direction = {
@@ -84,18 +109,21 @@ def fold(grid, direction, axis_index):
 
     # While folding...
     while axis_index < grid.dimlen(dimension):
-        vector = grid.remove_vector(dimension, grid.dimlen(dimension)-1)
+        # ... pop the next-furthest vector from the fold
+        vector = grid.pop(dimension)
         distance_from_axis = grid.dimlen(dimension) - axis_index
 
+        # If that vector wasn't the fold itself...
         if distance_from_axis > 0:
-            # Resolve the index of the vector into which to OR this one's values
-            receiving_vector = axis_index - distance_from_axis
-            receiving_indices = grid.get_vector_positions(dimension, receiving_vector)
+            # ... determine the index of the vector into which to OR the values
+            receiving_vector_index = axis_index - distance_from_axis
+            receiving_coordinates = get_coordinates(dimension, receiving_vector_index, len(vector))
+            for i, coordinates in enumerate(receiving_coordinates):
+                value = vector[i]
+                if value == 0:
+                    continue
 
-            for i, value in enumerate(vector):
-                if value:
-                    receiving_index = receiving_indices[i]
-                    grid[receiving_index] = value
+                grid[coordinates] = value
 
 
 def get_board(marked_positions):
@@ -173,7 +201,7 @@ def execute_fold_sequence(board, instructions):
     TODO EXPLAIN
 
     :param Grid[int] board:
-    :param (int,int) instructions:
+    :param list[(int,int)] instructions:
 
     :return: None
     """
