@@ -50,8 +50,6 @@ def enforce_fold_size(grid, dimension, axis_index):
         grid.insert(dimension, index=0, fill=0)
         i += 1
 
-    if vectors_to_add > 0:
-        print("AAAH")
     return vectors_to_add
 
 
