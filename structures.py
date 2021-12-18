@@ -290,6 +290,8 @@ class Grid(Generic[_T]):
             for i, row in enumerate(self._rows):  # type: int, typing.List
                 row.insert(index, values[i])
 
+            self._width += 1
+
         # Otherwise, vector was specified as being neither a row nor a column; can't handle this :(
         else:
             raise ValueError(f"Unexpected dimension code {repr(dimension)}")
@@ -323,6 +325,8 @@ class Grid(Generic[_T]):
                 result.append(
                     row.pop(index)
                 )
+
+            self._width -= 1
 
         else:
             raise ValueError(f"Unexpected dimension code {repr(dimension)}")
