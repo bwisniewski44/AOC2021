@@ -186,7 +186,7 @@ def main():
 
     # Part 2: Perform the remaining fold instructions; print the board
     execute_fold_sequence(board, fold_instructions[1:])
-    output_board(board, "output.txt")
+    output_board(board.transpose(), "output.txt")
 
 
 if __name__ == "__main__":
