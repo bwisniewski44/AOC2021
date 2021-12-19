@@ -16,43 +16,6 @@ FOLD_DIRECTION_BY_DIMENSION_INDICATOR = {
 }
 
 
-def enforce_fold_size(grid, dimension, axis_index):
-    """
-    Ensures that the grid has sufficient column/row space to allow a fold left/up (respectively) at the given fold
-    index.
-
-    :param Grid[int] grid:
-    :param int dimension:
-    :param int axis_index:
-
-    :return: number of vectors added
-    :rtype: int
-    """
-
-    # Ensure that the direction is valid
-    total_vector_count = grid.count(dimension)
-
-    # Ensure that there are at least as many vectors preceding the fold as there are following the fold; if there aren't
-    # already, we'll have to insert new, blank ones
-    preceding_vectors = axis_index
-    vectors_to_remove = total_vector_count - preceding_vectors
-
-    # The new grid will have exactly as many as the larger of the two groups of vectors; if the preceding vectors shall
-    # be those to survive the fold, so if they lack sufficient quantity, insert dummy blank vectors ahead of them (this
-    # will shift the fold index!)
-    if preceding_vectors >= vectors_to_remove:
-        vectors_to_add = 0
-    else:
-        vectors_to_add = vectors_to_remove - preceding_vectors
-
-    i = 0
-    while i < vectors_to_add:
-        grid.insert(dimension, index=0, fill=0)
-        i += 1
-
-    return vectors_to_add
-
-
 def fold(grid, direction, axis_index):
     """
     TODO EXPLAIN
@@ -69,26 +32,31 @@ def fold(grid, direction, axis_index):
         Grid.LEFT: Grid.VERTICAL
     }
     dimension = dimension_by_direction[direction]
-    vectors_added = enforce_fold_size(grid, dimension, axis_index)
-    axis_index += vectors_added
 
-    # While folding...
-    while axis_index < grid.count(dimension):
-        # ... pop the next-furthest vector from the fold
+    # A fold is expected to occur such that there are at least as many vectors preceding the fold as there are following
+    # the fold (the fold vector itself gets eliminated and counts towards neither the preceding nor following vectors)
+    preceding_vectors = axis_index
+    following_vectors = grid.count(dimension) - (preceding_vectors + 1)
+    if preceding_vectors < following_vectors:
+        raise IndexError(f"Cannot merge {following_vectors} vectors into {preceding_vectors} vectors")
+
+    # Start merging the vectors by popping those off the furthest ends of the grid
+    for receiving_index in range(axis_index-following_vectors, axis_index):
+        # Pop the next-furthest vector from the fold
         vector = grid.pop(dimension)
-        distance_from_axis = grid.count(dimension) - axis_index
 
-        # If that vector wasn't the fold itself...
-        if distance_from_axis > 0:
-            # ... determine the index of the vector into which to OR the values
-            receiving_vector_index = axis_index - distance_from_axis
-            coordinates = grid.get_coordinates(dimension, receiving_vector_index)
-            for i, coordinates in enumerate(coordinates):
-                value = vector[i]
-                if value == 0:
-                    continue
+        # Start merging its values into the coordinates of the receiving vector
+        coordinates = grid.get_coordinates(dimension, receiving_index)
+        for i, coordinates in enumerate(coordinates):
+            value = vector[i]
+            if value == 0:
+                continue
 
-                grid[coordinates] = value
+            grid[coordinates] = value
+
+    # All vectors have been merged; all that's left now is to remove the final vector, that which gets consumed by the
+    # fold
+    grid.pop(dimension)
 
 
 def get_board(marked_positions):
@@ -184,7 +152,7 @@ def execute_fold_sequence(board, instructions):
     return counter
 
 
-def output_board(board, path, separator="", positive="#", negative="."):
+def output_board(board, path, separator=" ", positive="#", negative=" "):
     """
     TODO EXPLAIN
 
