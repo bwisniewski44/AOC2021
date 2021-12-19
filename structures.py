@@ -379,6 +379,23 @@ class Grid(Generic[_T]):
 
         return coordinates
 
+    def transpose(self):
+        """
+        Produces an NxM copy of this MxN grid with the property that every (Y,X) coordinate therein contains that value
+        held herein at (X,Y).
+
+        :return: transposed copy of this grid
+        :rtype: Grid[_T]
+        """
+
+        other = Grid(height=self.width, width=self.height)
+
+        for i in range(self.height):
+            for j in range(self.width):
+                other[j, i] = self[i, j]
+
+        return other
+
     def __getitem__(self, pos):
         """
         TODO EXPLAIN
