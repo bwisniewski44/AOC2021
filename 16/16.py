@@ -16,6 +16,8 @@ class Packet:
 
     # Code defined by puzzle to indicate a packet which is of the "literal" format
     PACKET_TYPE_LITERAL = 4  # defined by puzzle parameters
+    OPERATOR_LENGTH_FORMAT_STATIC = 0
+    OPERATOR_LENGTH_FORMAT_DYNAMIC = 1
 
     def __init__(self, type_code, version, payload):
         """
@@ -99,6 +101,30 @@ def load_input(path="input.txt"):
     return "".join(bits)
 
 
+def read(bits, read_pos, count):
+    """
+    TODO EXPLAIN
+
+    :param str bits:
+    :param int read_pos:
+    :param int count:
+
+    :raises IndexError: if unable to read ``count`` bits from the given position
+
+    :return: 2-tuple giving...
+      1. (str) substring of bits
+      2. (int) new read-position
+    :rtype: (str, int)
+    """
+
+    end_pos = read_pos + count
+    if len(bits) < end_pos:
+        raise IndexError(f"Unable to read {count} bits from index {read_pos} for {len(bits)}-length string")
+    result = bits[read_pos:end_pos]
+
+    return result, end_pos
+
+
 def parse_literal_payload(bits, read_pos):
     """
     TODO EXPLAIN
@@ -118,14 +144,7 @@ def parse_literal_payload(bits, read_pos):
     while parsing:
         # Read the next group of bits; the group is composed of a prefix (giving whether there are more groups) followed
         # by this group's bits
-        group = bits[read_pos:read_pos+Packet.LITERAL_GROUP_LENGTH]
-        read_pos += Packet.LITERAL_GROUP_LENGTH
-        if len(group) != Packet.LITERAL_GROUP_LENGTH:
-            raise \
-                ValueError(
-                    f"Expecting {Packet.LITERAL_GROUP_LENGTH} bits in literal group; encountered {len(group)} for "
-                    f"group '{group}'"
-                )
+        group, read_pos = read(bits, read_pos, Packet.LITERAL_GROUP_LENGTH)
 
         # All but the first bit of this group get appended to the literal's bit-expression
         literal_bits.extend(group[1:])
@@ -152,21 +171,28 @@ def parse_packet(bits, read_pos=0):
     """
 
     # Extract the 3-bit packet version
-    packet_version_encoding = bits[read_pos:read_pos+Packet.VERSION_ENCODING_LENGTH]
+    packet_version_encoding, read_pos = read(bits, read_pos, Packet.VERSION_ENCODING_LENGTH)
     packet_version = int(packet_version_encoding, 2)
-    read_pos += Packet.VERSION_ENCODING_LENGTH
 
     # Extract the 3-bit type-code
-    type_code_expression = bits[read_pos:read_pos+Packet.TYPE_CODE_LENGTH]
+    type_code_expression, read_pos = read(bits, read_pos, Packet.TYPE_CODE_LENGTH)
     type_code = int(type_code_expression, 2)
-    read_pos += Packet.TYPE_CODE_LENGTH
 
     # If this packet is a literal, parse it out
     if type_code == Packet.PACKET_TYPE_LITERAL:
         literal_value, read_pos = parse_literal_payload(bits, read_pos)
         result = Packet(type_code, packet_version, literal_value)
     else:
-        pass
+        # Extract the length descriptor
+        length_descriptor, read_pos = read(bits, read_pos, 1)
+
+        # If the length descriptor indicates a length specifying the number of bits...
+        if length_descriptor == "0":
+            pass
+
+        # Otherwise, length descriptor indicates a length which specifies the number of inner-nested packets
+        else:
+            length_expression, read_pos = read(bits, read_pos, 11)
 
     return result, read_pos
 
