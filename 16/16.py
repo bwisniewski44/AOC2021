@@ -184,17 +184,74 @@ def parse_packet(bits, read_pos=0):
         result = Packet(type_code, packet_version, literal_value)
     else:
         # Extract the length descriptor
+        inner_packets = []  # type: typing.List[Packet]
         length_descriptor, read_pos = read(bits, read_pos, 1)
 
         # If the length descriptor indicates a length specifying the number of bits...
         if length_descriptor == "0":
-            pass
+            length_expression, read_pos = read(bits, read_pos, 15)
+            length = int(length_expression, 2)
+            destination_pos = read_pos + length
+
+            while read_pos < destination_pos:
+                inner_packet, read_pos = parse_packet(bits, read_pos)
+                inner_packets.append(inner_packet)
+
+            if read_pos != destination_pos:
+                raise \
+                    RuntimeError(
+                        f"Packet parsing over-consumed; expecting inner packet parse to terminate at "
+                        f"{destination_pos}, but actually terminated at index {read_pos}"
+                    )
 
         # Otherwise, length descriptor indicates a length which specifies the number of inner-nested packets
         else:
             length_expression, read_pos = read(bits, read_pos, 11)
+            length = int(length_expression, 2)
+
+            for _ in range(length):
+                inner_packet, read_pos = parse_packet(bits, read_pos)
+                inner_packets.append(inner_packet)
+
+        result = Packet(type_code, packet_version, inner_packets)
 
     return result, read_pos
+
+
+def parse_input(bits):
+    """
+    TODO EXPLAIN
+
+    :param str bits:
+
+    :return:
+    :rtype: list[Packet]
+    """
+
+    packets = []
+
+    read_pos = 0
+    while read_pos < len(bits):
+        remaining_bits = len(bits) - read_pos
+        if remaining_bits < 8 and all(bit == "0" for bit in bits[-remaining_bits:]):  # TODO: verify 8??
+            read_pos = len(bits)
+            break
+        else:
+            try:
+                next_packet, read_pos = parse_packet(bits, read_pos)
+            except IndexError as error:
+                print(f"ERROR during parse: {error}")
+                break
+            else:
+                packets.append(next_packet)
+
+    if read_pos != len(bits):
+        raise \
+            RuntimeError(
+                f"Packet-parsing stopped at index {read_pos}, failing to exactly consume {len(bits)}-bit string"
+            )
+
+    return packets
 
 
 def main():
@@ -204,7 +261,8 @@ def main():
     :return: None
     """
     bits = load_input()
-    packet = parse_packet("110100101111111000101000")
+
+    packets = parse_input("00111000000000000110111101000101001010010001001000000000")
 
 
 if __name__ == "__main__":
