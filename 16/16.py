@@ -6,7 +6,6 @@ https://adventofcode.com/2021
 """
 
 import typing
-from collections import deque
 from structures import KeySet
 
 
@@ -22,13 +21,13 @@ def load_input(path="input.txt"):
     :param str path: path to the file to read as input to this script
 
     :return: list of ``0`` and ``1`` characters
-    :rtype: deque[str]
+    :rtype: list[str]
     """
     with open(path) as infile:
         lines = [str.strip(line) for line in infile.readlines()]
 
     # The leading line should be a string of hex digits; convert each such digit into its own string of bits
-    bits = deque()  # type: typing.Deque[str]
+    bits = []  # type: typing.List[str]
     for hex_digit in lines[0]:
         # Get the abstract integer value represented by this hex digit
         value = int(hex_digit, 16)
