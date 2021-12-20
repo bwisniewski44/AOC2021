@@ -6,6 +6,7 @@ https://adventofcode.com/2021
 """
 
 import typing
+from collections import defaultdict
 
 SEPARATOR = "->"
 
@@ -17,7 +18,7 @@ def load_input(path="input.txt"):
     :param str path: path to the file to read as input to this script
 
     :return: productions by pair
-    :rtype: (str, dict[(str,str), (str,str)])
+    :rtype: (str, dict[(str,str), ((str,str),(str,str))])
     """
     with open(path) as infile:
         lines = [str.strip(line) for line in infile.readlines()]
@@ -91,13 +92,53 @@ def generate_tallies(sequence):
     return tally_by_pair
 
 
+def generate(tally_by_pair, productions_by_pair, generations):
+    """
+    TODO EXPLAIN
+
+    :param dict[(str,str), int] tally_by_pair:
+    :param dict[(str,str), ( (str,str) , (str,str) )] productions_by_pair:
+    :param int generations:
+
+    :return: None
+    """
+
+    i = 0
+    while i < generations:
+        # Another round of generating values; let's measure the population changes here
+        delta_by_pair = defaultdict(lambda: 0)  # type: typing.DefaultDict[typing.Tuple[str,str], int]
+
+        # For each pair...
+        for manufacturer, tally in tally_by_pair.items():
+            # ... determine what productions are manufactured by this pair; their population-change is boosted by the
+            # tally of manufacturers which are producing these pairs
+            production_a, production_b = productions_by_pair[manufacturer]
+            delta_by_pair[production_a] += tally
+            delta_by_pair[production_b] += tally
+
+            # ... and the population-change of the manufacturer falls as it is destroyed to produce the pairs
+            delta_by_pair[manufacturer] -= tally
+
+        # Apply the population changes
+        for key, delta in delta_by_pair.items():
+            old_tally = tally_by_pair.get(key, 0)
+            new_tally = old_tally + delta
+            if new_tally < 0:
+                raise ValueError(f"Unexpected negative count for pair {key} in {i}th generation")
+
+            tally_by_pair[key] = new_tally
+
+
 def main():
     """
     TODO EXPLAIN
 
     :return: None
     """
-    load_input()
+    initial_sequence, productions_by_pair = load_input()
+
+    tallies_by_pair = generate_tallies(initial_sequence)
+    generate(tallies_by_pair, productions_by_pair, 100)
 
 
 if __name__ == "__main__":
