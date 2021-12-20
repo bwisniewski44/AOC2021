@@ -14,6 +14,25 @@ PACKET_TYPES = KeySet()
 LITERAL, OPERATOR_FULL, OPERATOR_PARENT = PACKET_TYPES.enumerate(3)
 
 
+class Packet:
+
+    _LITERAL_TYPE = 4   # defined by puzzle parameters
+
+    def __init__(self, type_code, version, children=None):
+        """
+        :param int type_code:
+        :param int version:
+        :param list[Packet] children:
+        """
+        self.type = type_code
+        self.version = version
+        self.children = children or []
+
+    @property
+    def is_literal(self):
+        return self.type == Packet._LITERAL_TYPE
+
+
 def load_input(path="input.txt"):
     """
     TODO EXPLAIN
