@@ -60,6 +60,37 @@ def load_input(path="input.txt"):
     return base, productions_by_pair
 
 
+def generate_tallies(sequence):
+    """
+    TODO EXPLAIN
+
+    :param str sequence:
+
+    :return:
+    :rtype: dict[(str,str), int]
+    """
+
+    tally_by_pair = {}  # type: typing.Dict[typing.Tuple[str,str], int]
+
+    # Iterate over the elements
+    leading_element = sequence[0]
+    i = 1
+    while i < len(sequence):
+        # Determine this next pair in the sequence
+        following_element = sequence[i]
+        pair = (leading_element, following_element)
+
+        # Update the tally associated with the pair
+        old_tally = tally_by_pair.get(pair, 0)
+        tally_by_pair[pair] = old_tally + 1
+
+        # Advance to the next pair; the element concluding this pair begins the next
+        leading_element = following_element
+        i += 1
+
+    return tally_by_pair
+
+
 def main():
     """
     TODO EXPLAIN
