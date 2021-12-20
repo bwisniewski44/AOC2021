@@ -254,6 +254,35 @@ def parse_input(bits):
     return packets
 
 
+def _recursive_sum_versions(packet):
+    """
+    TODO EXPLAIN
+
+    :param Packet packet:
+
+    :return:
+    :rtype: int
+    """
+
+    if packet.is_literal:
+        return packet.version
+    else:
+        return sum(_recursive_sum_versions(child) for child in packet.children)
+
+
+def sum_versions(packets):
+    """
+    TODO EXPLAIN
+
+    :param list[Packet] packets:
+
+    :return:
+    :rtype: int
+    """
+
+    return sum(_recursive_sum_versions(packet) for packet in packets)
+
+
 def main():
     """
     TODO EXPLAIN
@@ -262,7 +291,9 @@ def main():
     """
     bits = load_input()
 
-    packets = parse_input("00111000000000000110111101000101001010010001001000000000")
+    packets = parse_input(bits)
+
+    print(sum_versions(packets))
 
 
 if __name__ == "__main__":
