@@ -128,6 +128,9 @@ def generate(tally_by_pair, productions_by_pair, generations):
 
             tally_by_pair[key] = new_tally
 
+        # Advance to the next round of generation
+        i += 1
+
 
 def main():
     """
