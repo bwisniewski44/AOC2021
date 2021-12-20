@@ -205,6 +205,10 @@ def main():
     tallies_by_element = generate(initial_sequence, productions_by_pair, 10)
     print(diff_optima(tallies_by_element))
 
+    # Part 2: "second verse, same as the first"
+    tallies_by_element = generate(initial_sequence, productions_by_pair, 40)
+    print(diff_optima(tallies_by_element))
+
 
 if __name__ == "__main__":
     main()
