@@ -109,7 +109,8 @@ def generate(initial_sequence, productions_by_pair, generations):
     :param dict[(str,str), str] productions_by_pair:
     :param int generations:
 
-    :return: None
+    :return: tally by element
+    :rtype: dict[str,int]
     """
 
     # Keep track of the population-by-element
@@ -153,6 +154,44 @@ def generate(initial_sequence, productions_by_pair, generations):
         # Advance to the next round of generation
         i += 1
 
+    return tally_by_element
+
+
+def diff_optima(tallies_by_element):
+    """
+    Gives the difference in population between the most- and least-populous elements in the tally.
+
+    :param dict[str, int] tallies_by_element:
+
+    :return:
+    :rtype: int
+    """
+
+    if len(tallies_by_element) < 2:
+        raise ValueError(f"Expecting to diff two populations; found only {len(tallies_by_element)}")
+
+    max_tally = max(tally for _, tally in tallies_by_element.items())
+    min_tally = min(tally for _, tally in tallies_by_element.items())
+
+    top_populations = set(key for key, tally in tallies_by_element.items() if tally == max_tally)
+    bottom_populations = set(key for key, tally in tallies_by_element.items() if tally == min_tally)
+
+    if len(top_populations) != 1:
+        raise \
+            ValueError(
+                f"Expecting to find a single, authoritative maximum population; found {len(top_populations)}: "
+                f"{', '.join(top_populations)}"
+            )
+    elif len(bottom_populations) != 1:
+        raise \
+            ValueError(
+                f"Expecting to find a single, authoritative minimum population; found {len(bottom_populations)}: "
+                f"{', '.join(bottom_populations)}"
+            )
+
+    difference = max_tally - min_tally
+    return difference
+
 
 def main():
     """
@@ -163,7 +202,8 @@ def main():
     initial_sequence, productions_by_pair = load_input()
 
     # Part 1: TODO EXPLAIN
-    generate(initial_sequence, productions_by_pair, 10)
+    tallies_by_element = generate(initial_sequence, productions_by_pair, 10)
+    print(diff_optima(tallies_by_element))
 
 
 if __name__ == "__main__":
