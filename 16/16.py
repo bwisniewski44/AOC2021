@@ -64,7 +64,7 @@ class Packet:
         if self.is_literal:
             return str(self.value)
         else:
-            return "[" + ", ".join(repr(child) for child in self.children) + "]"
+            return "<" + ",".join(repr(child) for child in self.children) + ">"
 
 
 def load_input(path="input.txt"):
@@ -78,10 +78,22 @@ def load_input(path="input.txt"):
     """
     with open(path) as infile:
         lines = [str.strip(line) for line in infile.readlines()]
+    return hex_to_bits(lines[0])
+
+
+def hex_to_bits(hexadecimal_expression):
+    """
+    TODO EXPLAIN
+
+    :param str hexadecimal_expression:
+
+    :return:
+    :rtype: str
+    """
 
     # The leading line should be a string of hex digits; convert each such digit into its own string of bits
     bits = []  # type: typing.List[str]
-    for hex_digit in lines[0]:
+    for hex_digit in hexadecimal_expression:
         # Get the abstract integer value represented by this hex digit
         value = int(hex_digit, 16)
 
@@ -232,18 +244,20 @@ def parse_input(bits):
 
     read_pos = 0
     while read_pos < len(bits):
-        remaining_bits = len(bits) - read_pos
-        if remaining_bits < 8 and all(bit == "0" for bit in bits[-remaining_bits:]):  # TODO: verify 8??
-            read_pos = len(bits)
-            break
-        else:
-            try:
-                next_packet, read_pos = parse_packet(bits, read_pos)
-            except IndexError as error:
-                print(f"ERROR during parse: {error}")
+        try:
+            next_packet, read_pos = parse_packet(bits, read_pos)
+        except IndexError as error:
+            # This might not be the worst thing in the world; we may have run into a situation where the remaining bits
+            # are 'padding 0s': non-significant bits which were required by the original hex
+            remaining_bits = len(bits) - read_pos
+            if remaining_bits < 8 and all(bit == "0" for bit in bits[-remaining_bits:]):
+                read_pos = len(bits)
                 break
             else:
-                packets.append(next_packet)
+                print(f"ERROR during parse: {error}")
+                raise
+
+        packets.append(next_packet)
 
     if read_pos != len(bits):
         raise \
@@ -290,6 +304,7 @@ def main():
     :return: None
     """
     bits = load_input()
+    bits = hex_to_bits("EE00D40C823060")
 
     packets = parse_input(bits)
 
