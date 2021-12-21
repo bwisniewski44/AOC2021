@@ -278,10 +278,13 @@ def _recursive_sum_versions(packet):
     :rtype: int
     """
 
-    if packet.is_literal:
-        return packet.version
-    else:
-        return sum(_recursive_sum_versions(child) for child in packet.children)
+    # Version sum is the this packet's version plus the sum of all child versions
+    result = packet.version
+    if not packet.is_literal:
+        for child in packet.children:
+            result += _recursive_sum_versions(child)
+
+    return result
 
 
 def sum_versions(packets):
@@ -304,10 +307,9 @@ def main():
     :return: None
     """
     bits = load_input()
-    bits = hex_to_bits("EE00D40C823060")
 
+    # Part 1: sum the version numbers associated with every packet (including nested packets)
     packets = parse_input(bits)
-
     print(sum_versions(packets))
 
 
