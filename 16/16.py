@@ -6,6 +6,8 @@ https://adventofcode.com/2021
 """
 
 import typing
+import math
+from structures import KeySet
 
 
 class Packet:
@@ -15,9 +17,30 @@ class Packet:
     LITERAL_GROUP_LENGTH = 5  # 4 bits + 1 end-indicator
 
     # Code defined by puzzle to indicate a packet which is of the "literal" format
-    PACKET_TYPE_LITERAL = 4  # defined by puzzle parameters
     OPERATOR_LENGTH_FORMAT_STATIC = 0
     OPERATOR_LENGTH_FORMAT_DYNAMIC = 1
+
+    PACKET_TYPES = KeySet()  # type: KeySet[int,typing.Callable[[typing.Union[int,typing.List[Packet]]], int]]
+    PACKET_TYPE_SUM,                \
+        PACKET_TYPE_PRODUCT,        \
+        PACKET_TYPE_MINIMUM,        \
+        PACKET_TYPE_MAXIMUM,        \
+        PACKET_TYPE_LITERAL,        \
+        PACKET_TYPE_GREATER_THAN,   \
+        PACKET_TYPE_LESS_THAN,      \
+        PACKET_TYPE_EQUAL_TO,       \
+        = PACKET_TYPES.enumerate(
+            [
+                lambda content: sum(node.value for node in content),
+                lambda content: math.prod(node.value for node in content),
+                lambda content: min(node.value for node in content),
+                lambda content: max(node.value for node in content),
+                lambda content: content,
+                lambda content: int(content[0].value > content[1].value),
+                lambda content: int(content[0].value < content[1].value),
+                lambda content: int(content[0].value == content[1].value),
+            ]
+        )
 
     def __init__(self, type_code, version, payload):
         """
@@ -42,16 +65,20 @@ class Packet:
         self.version = version
         self._payload = payload
 
+        try:
+            compute_value = Packet.PACKET_TYPES[type_code]
+        except KeyError:
+            raise KeyError(f"Unrecognized packet type-code {type_code}")
+        else:
+            self._value = compute_value(payload)
+
     @property
     def is_literal(self):
         return self._type == Packet.PACKET_TYPE_LITERAL
 
     @property
     def value(self):
-        if self.is_literal:
-            return self._payload
-        else:
-            raise RuntimeError(f"Illegal attempt to read value of non-literal packet")
+        return self._value
 
     @property
     def children(self):
@@ -311,6 +338,9 @@ def main():
     # Part 1: sum the version numbers associated with every packet (including nested packets)
     packets = parse_input(bits)
     print(sum_versions(packets))
+
+    # Part 2: print the value of the packet
+    print(packets[0].value)
 
 
 if __name__ == "__main__":
