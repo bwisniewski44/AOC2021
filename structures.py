@@ -5,7 +5,7 @@ import heapq
 import itertools
 from collections.abc import Hashable, Sequence
 import typing
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Generator
 
 
 class KeySet(dict):
@@ -427,6 +427,184 @@ class Grid(Generic[_T]):
             self._rows[row][col] = value
         except IndexError:
             self._raise_oob(key)
+
+
+class Space(Generic[_T]):
+    """
+    TODO EXPLAIN
+    """
+
+    class Coordinate:
+        """
+        TODO EXPLAIN
+        """
+
+        def __init__(self, x, y, z):
+            """
+            :param int x: TODO EXPLAIN
+            :param int y:
+            :param int z:
+            """
+            self._values = [x, y, z]
+
+        @property
+        def x(self):
+            return self._values[0]
+
+        def y(self):
+            return self._values[1]
+
+        @property
+        def z(self):
+            return self._values[2]
+
+        def unpack(self):
+            return tuple(self._values)
+
+        def __repr__(self):
+            return f"<{self.x},{self.y},{self.z}>"
+
+        def __getitem__(self, item):
+            """
+            TODO EXPLAIN
+
+            :param int item:
+
+            :return:
+            :rtype: int
+            """
+            return self._values[item]
+
+        def __setitem__(self, key, value):
+            """
+            TODO EXPLAIN
+
+            :param int key:
+            :param int value:
+
+            :return: None
+            """
+            self._values[key] = value
+
+        def __eq__(self, other):
+            """
+            TODO EXPLAIN
+
+            :param Cube.Coordinate|(int,int,int) other:
+
+            :return:
+            :rtype: bool
+            """
+            return self[0] == other[0] and self[1] == other[1] and self[2] == other[2]
+
+        def __hash__(self):
+            return hash(self.unpack())
+
+    def __init__(self, background=None):
+        """
+        :param _T background:
+        """
+
+        self._values = {}   # type: typing.Dict[Cube.Coordinate, typing.Any]
+        self._background = background
+
+    def __setitem__(self, key, value):
+        """
+        TODO EXPLAIN
+        
+        :param Cube.Coordinate|(int,int,int) key: 
+        :param _T value:
+         
+        :return: None
+        """
+
+        # TODO: check bounds!!
+        if value == self._background:
+            self._values.pop(key, None)
+        else:
+            self._values[key] = value
+
+    def __getitem__(self, item):
+        """
+        TODO EXPLAIN
+        
+        :param Cube.Coordinate|(int,int,int) item: 
+        
+        :return:
+        :rtype: _T | None
+        """
+        return self._values.get(item, self._background)
+
+    def items(self) -> Generator[typing.Tuple[Coordinate, _T], None, None]:
+        for key, value in self._values.items():
+            yield key, value
+
+
+class Cube(Space):
+    """
+    TODO EXPLAIN
+    """
+
+    def __init__(self, ranges_, background=None):
+        """
+        :param ranges_: TODO EXPLAIN
+        :param background:
+        """
+        Space.__init__(self, background=background)
+        self._x_range, self._y_range, self._z_range = ranges_
+
+        for range_ in ranges_:
+            if not len(range_) == 2:
+                raise ValueError(f"Expecting 2 elements in range; encountered {len(range_)}")
+            elif not all(isinstance(element, int) for element in range_):
+                raise \
+                    TypeError(
+                        f"Expecting integer ranges, but encountered illegal element in: "
+                        f"<{','.join(str(element) for element in range_)}>"
+                    )
+            lower_bound, upper_bound = range_
+            if not lower_bound <= upper_bound:
+                raise ValueError(f"Lower-bound {lower_bound} must appear before upper-bound {upper_bound} in range")
+
+    @property
+    def ranges(self):
+        return self._x_range, self._y_range, self._z_range
+
+    def intersection(self, other):
+        """
+        TODO EXPLAIN
+
+        :param Cube other:
+
+        :return:
+        :rtype: ( (int,int) , (int,int) , (int,int) ) | None
+        """
+
+        overlap_ranges = []  # type: typing.List[typing.Tuple[int,int]]
+        for my_range, their_range in zip(self.ranges, other.ranges):  # type: typing.Tuple[int,int], typing.Tuple[int,int]
+            most_restrictive_min = max(my_range[0], their_range[0])
+            most_restrictive_max = min(my_range[1], their_range[1])
+
+            if most_restrictive_min <= most_restrictive_max:
+                overlap_ranges.append(
+                    (most_restrictive_min, most_restrictive_max)
+                )
+            else:
+                return None
+
+        return tuple(overlap_ranges)
+
+    def points(self) -> Generator[Space.Coordinate, None, None]:
+        i, i_goal = self._x_range
+        while i <= i_goal:
+            j, j_goal = self._y_range
+            while j <= j_goal:
+                k, k_goal = self._z_range
+                while k <= k_goal:
+                    yield Cube.Coordinate(i, j, k)
+                    k += 1
+                j += 1
+            i += 1
 
 
 class PriorityQueue:
