@@ -553,6 +553,8 @@ class Cube(Space):
         Space.__init__(self, background=background)
         self._x_range, self._y_range, self._z_range = ranges_
 
+        # Iterate over the ranges to compute volume; while we're at it, validate each range
+        self._volume = 1
         for range_ in ranges_:
             if not len(range_) == 2:
                 raise ValueError(f"Expecting 2 elements in range; encountered {len(range_)}")
@@ -565,6 +567,13 @@ class Cube(Space):
             lower_bound, upper_bound = range_
             if not lower_bound <= upper_bound:
                 raise ValueError(f"Lower-bound {lower_bound} must appear before upper-bound {upper_bound} in range")
+
+            measure = upper_bound - lower_bound + 1
+            self._volume *= measure
+
+    @property
+    def volume(self):
+        return self._volume
 
     @property
     def ranges(self):
