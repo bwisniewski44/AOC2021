@@ -250,6 +250,42 @@ def get_part_1(instructions):
     return result
 
 
+def register_intersections(instructions, i, intersections=None):
+    """
+    TODO EXPLAIN
+
+    :param list[Instruction] instructions:
+    :param int i:
+    :param set[int] intersections:
+
+    :return:
+    :rtype: set[int]
+    """
+
+    # If this is the root call, intersections may yet be initialized to the empty-set; ensure we have a set
+    if intersections is None:
+        intersections = set()  # type: typing.Set[int]
+
+    # If this node has yet to be introduced to the set of intersections...
+    if i not in intersections:
+        # ... add the node
+        intersections.add(i)
+        basis = instructions[i]
+
+        # For all other instructions...
+        j = 0
+        while j < len(instructions):
+            comp_instruction = instructions[j]
+            has_intersection = (basis.cube.intersection(comp_instruction.cube) is not None)
+            if has_intersection:
+                # ... add it and its intersections
+                register_intersections(instructions, j, intersections)
+
+            j += 1
+
+    return intersections
+
+
 def get_independent_sequences(instructions):
     """
     Reduces the instruction set to contain those instructions
@@ -260,15 +296,27 @@ def get_independent_sequences(instructions):
     :rtype: list[list[Instruction]]
     """
 
-    sequence_counter = 0
-    sequence_by_instruction_index = {}
+    independent_sequences = []  # type: typing.List[typing.List[Instruction]]
+    sequence_by_instruction_index = {}      # type: typing.Dict[int,int]
     i = 0
     while i < len(instructions):
-        # Any instructions before this index have already had their sequence number resolved; find this instruction's
-        # intersection with all other instructions
-        j = i+1
-        while j < len(instructions):
-            pass
+        # Resolve the current instruction under consideration; if its intersections have already been found, skip it
+        if i not in sequence_by_instruction_index:
+            # Find the nodes intersecting this
+            intersecting_indices = register_intersections(instructions, i)
+            instruction_group = []  # type: typing.List[Instruction]
+            for index in sorted(intersecting_indices):
+                sequence_by_instruction_index[index] = len(independent_sequences)
+                instruction_group.append(instructions[index])
+            independent_sequences.append(instruction_group)
+
+        i += 1
+
+    return independent_sequences
+
+
+def reduce_instruction_set(instructions):
+    get_independent_sequences(instructions)
 
 
 def get_part_2(instructions):
@@ -285,8 +333,8 @@ def get_part_2(instructions):
 
     for i, instruction in enumerate(instructions):
         application_space = instruction.cube
-        for coorindate in application_space.points():
-            space[coorindate] = instruction.activate
+        for coordinate in application_space.points():
+            space[coordinate] = instruction.activate
         print(f"Applied {i+1} of {len(instructions)} instructions")
 
     result = count_active_positions(space)
@@ -300,10 +348,11 @@ def main():
     :return: None
     """
     instructions = load_input()
+    get_independent_sequences(instructions)
 
     print(get_part_1(instructions))
 
-    #print(get_part_2(instructions))
+    print(get_part_2(instructions))
 
 
 if __name__ == "__main__":
