@@ -6,7 +6,7 @@ https://adventofcode.com/2021
 """
 
 import typing
-from structures import Cube
+from structures import Cube, Space
 
 
 def express_range(range_):
@@ -126,15 +126,12 @@ class Instruction:
         :param (int,int) z_range:
         """
         self.activate = activate
-        self.x_range = x_range
-        self.y_range = y_range
-        self.z_range = z_range
+        self.cube = Cube([x_range, y_range, z_range], background=False)
 
     def __repr__(self):
         active_expression = Instruction.ACTIVATE_INSTRUCTION if self.activate else Instruction.DEACTIVATE_INSTRUCTION
-        return \
-            f"{active_expression} X{express_range(self.x_range)} Y{express_range(self.y_range)} " \
-            f"Z{express_range(self.z_range)}"
+        x_range, y_range, z_range = self.cube.ranges
+        return f"{active_expression} X{express_range(x_range)} Y{express_range(y_range)} Z{express_range(z_range)}"
 
 
 def load_input(path="input.txt"):
@@ -212,7 +209,7 @@ def count_active_positions(space):
     """
     TODO EXPLAIN
 
-    :param Cube[bool] space:
+    :param Space[bool] space:
 
     :return:
     :rtype: int
@@ -241,7 +238,7 @@ def get_part_1(instructions):
         )  # type: Cube[bool]
 
     for i, instruction in enumerate(instructions):
-        target_space = Cube((instruction.x_range, instruction.y_range, instruction.z_range))
+        target_space = instruction.cube
         application_range = initialization_space.intersection(target_space)
         if application_range is not None:
             application_space = Cube(application_range)  # type: Cube[bool]
@@ -251,6 +248,27 @@ def get_part_1(instructions):
 
     result = count_active_positions(initialization_space)
     return result
+
+
+def get_independent_sequences(instructions):
+    """
+    Reduces the instruction set to contain those instructions
+
+    :param list[Instruction] instructions:
+
+    :return: list positions identifying ON fields which do not intersect with other cubes
+    :rtype: list[list[Instruction]]
+    """
+
+    sequence_counter = 0
+    sequence_by_instruction_index = {}
+    i = 0
+    while i < len(instructions):
+        # Any instructions before this index have already had their sequence number resolved; find this instruction's
+        # intersection with all other instructions
+        j = i+1
+        while j < len(instructions):
+            pass
 
 
 def get_part_2(instructions):
@@ -263,7 +281,16 @@ def get_part_2(instructions):
     :rtype: int
     """
 
-    space = Cube(background=False)
+    space = Space(background=False)  # type: Space[bool]
+
+    for i, instruction in enumerate(instructions):
+        application_space = instruction.cube
+        for coorindate in application_space.points():
+            space[coorindate] = instruction.activate
+        print(f"Applied {i+1} of {len(instructions)} instructions")
+
+    result = count_active_positions(space)
+    return result
 
 
 def main():
@@ -275,6 +302,8 @@ def main():
     instructions = load_input()
 
     print(get_part_1(instructions))
+
+    #print(get_part_2(instructions))
 
 
 if __name__ == "__main__":
