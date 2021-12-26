@@ -654,7 +654,7 @@ class Cube(Space):
         :param Cube cube_b:
 
         :return:
-        :rtype: (Cube, list[Cube], list[Cube])
+        :rtype: ( ( (int,int),(int,int),(int,int) )|None, list[Cube], list[Cube])
         """
 
         intersection = cube_a.intersection(cube_b)
