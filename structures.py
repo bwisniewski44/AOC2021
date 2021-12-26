@@ -3,7 +3,6 @@ TODO EXPLAIN
 """
 import heapq
 import itertools
-from collections import deque
 from collections.abc import Hashable, Sequence, Iterable
 import typing
 from typing import Generic, TypeVar, Generator
@@ -603,6 +602,72 @@ class Cube(Space):
                 return None
 
         return tuple(overlap_ranges)
+
+    @staticmethod
+    def _get_what_i_want(super_cube, sub_ranges, background=None):  # TODO: rename things af
+        """
+        TODO EXPLAIN
+
+        :param Cube super_cube:
+        :param ( (int,int) , (int,int) , (int,int) ) sub_ranges:
+        :param background:
+
+        :return:
+        :rtype: list[Cube]
+        """
+
+        dimensions = \
+            []  # type: typing.List[typing.Tuple[typing.Optional[typing.Tuple[int,int]], typing.Optional[typing.Tuple[int,int]]]]
+        for super_range, sub_range in zip(super_cube.ranges, sub_ranges):
+            # TODO: comment
+            if super_range[0] < sub_range[0]:
+                minrange = (super_range[0], sub_range[1]-1)
+            else:
+                minrange = None
+
+            # TODO: comment
+            if sub_range[1] < super_range[1]:
+                maxrange = (sub_range[1]+1, super_range[1])
+            else:
+                maxrange = None
+
+            dimensions.append(
+                (minrange, maxrange)
+            )
+
+        # There are potentially 2 cuboids
+        cuboids = []  # type: typing.List[Cube]
+        for i in range(2):
+            this_dimensions = [ranges[i] for ranges in dimensions]
+            if any(range_ is None for range_ in this_dimensions):
+                continue
+            cuboids.append(Cube(this_dimensions, background=background))
+
+        return cuboids
+
+    @staticmethod
+    def get_intersection_composites(cube_a, cube_b):
+        """
+        TODO EXPLAIN
+
+        :param Cube cube_a:
+        :param Cube cube_b:
+
+        :return:
+        :rtype: (Cube, list[Cube], list[Cube])
+        """
+
+        intersection = cube_a.intersection(cube_b)
+        if intersection is None:
+            result = None, [cube_a], [cube_b]
+        else:
+            subcubes = []  # type: typing.List[typing.List[Cube]]
+            for cube in cube_a, cube_b:
+                subcubes.append(Cube._get_what_i_want(cube, intersection))
+
+            result = intersection, subcubes[0], subcubes[1]
+
+        return result
 
     def points(self) -> Generator[Space.Coordinate, None, None]:
         i, i_goal = self._x_range
