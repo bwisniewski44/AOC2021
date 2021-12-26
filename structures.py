@@ -3,7 +3,8 @@ TODO EXPLAIN
 """
 import heapq
 import itertools
-from collections.abc import Hashable, Sequence
+from collections import deque
+from collections.abc import Hashable, Sequence, Iterable
 import typing
 from typing import Generic, TypeVar, Generator
 
@@ -614,6 +615,21 @@ class Cube(Space):
                     k += 1
                 j += 1
             i += 1
+
+    def envelopes(self, other):
+        """
+        TODO EXPLAIN
+
+        :param Cube other:
+
+        :return:
+        :rtype: bool
+        """
+
+        for my_range, their_range in zip(self.ranges, other.ranges):
+            if not (my_range[0] <= their_range[0] and my_range[1] >= their_range[1]):
+                return False
+        return True
 
 
 class PriorityQueue:
